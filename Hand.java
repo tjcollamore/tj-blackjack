@@ -2,6 +2,11 @@ import java.util.*;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 
+import java.util.List;
+import java.util.ArrayList;
+import javafx.collections.ObservableList;
+import javafx.scene.Node;
+
 public class Hand
 {
   private IOutputter outputter;
