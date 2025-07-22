@@ -29,14 +29,5 @@ public class PlayerInteractiveHandStrategy implements HandStrategy
       outputter.output("Drawn card: " + card);
       hand.addCard(card);
     } while (!hand.isBusted());
-
-    outputter.output("Your score is: " + hand.getScore());
-    if (hand.isBlackjack())
-      outputter.output("Blackjack!");
-    else
-    {
-      if (hand.isBusted())
-        outputter.output("Busted!");
-    }
   }
 }

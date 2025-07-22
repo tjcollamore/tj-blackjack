@@ -10,23 +10,22 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
-public class ChoiceDialog {
-
-    public static String show(Stage ownerStage, String message, String... options) {
+public class ChoiceDialog
+{
+    public static String show(Stage ownerStage, String message, String... options)
+    {
         final String[] result = {null};
 
-        // === Background overlay ===
+        //Background overlay
         StackPane overlay = new StackPane();
         overlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.4);");
         overlay.setAlignment(Pos.CENTER);
 
-        // === Dialog content ===
+        //Dialog content
         VBox content = new VBox(15);
         content.setAlignment(Pos.CENTER);
         content.setPadding(new Insets(20));
-        content.setBackground(new Background(new BackgroundFill(
-                Color.web("#f9f9f9"), CornerRadii.EMPTY, Insets.EMPTY
-        )));
+        content.setBackground(new Background(new BackgroundFill(Color.web("#f9f9f9"), CornerRadii.EMPTY, Insets.EMPTY)));
 
         Text text = new Text(message);
         text.setStyle("-fx-font-size: 16px; -fx-fill: #333;");
@@ -51,7 +50,7 @@ public class ChoiceDialog {
 
         content.getChildren().addAll(text, buttons);
 
-        // === Outer container ===
+        //Outer container
         StackPane dialogBox = new StackPane();
         dialogBox.setPadding(new Insets(2));
         dialogBox.getChildren().add(content);
@@ -62,23 +61,24 @@ public class ChoiceDialog {
 
         overlay.getChildren().add(dialogBox);
 
-        // === Stage setup ===
+        //Stage setup
         Stage dialogStage = new Stage();
         dialogStage.initStyle(StageStyle.TRANSPARENT);
         dialogStage.initModality(Modality.APPLICATION_MODAL);
         dialogStage.initOwner(ownerStage);
         dialogStage.setScene(new Scene(overlay, Color.TRANSPARENT));
 
-        // === Position offset from center ===
+        //Position offset from center
         dialogStage.setOnShown(e -> {
             javafx.application.Platform.runLater(() -> {
-                double offsetX = 60;
+                double offsetX = 0;
                 dialogStage.setX(ownerStage.getX() + ownerStage.getWidth() / 2 - dialogStage.getWidth() / 2 + offsetX);
-                dialogStage.setY(ownerStage.getY() + ownerStage.getHeight() / 2 - dialogStage.getHeight() / 2);
+                double offsetY = -90;
+                dialogStage.setY(ownerStage.getY() + ownerStage.getHeight() / 2 - dialogStage.getHeight() / 2 + offsetY);
             });
         });
 
-        // === Draggable dialog ===
+        //Draggable dialog
         final Delta dragDelta = new Delta();
         dialogBox.setOnMousePressed(e -> {
             dragDelta.x = dialogStage.getX() - e.getScreenX();

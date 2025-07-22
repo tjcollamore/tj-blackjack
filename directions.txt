@@ -48,7 +48,7 @@
 
 25. We have some Shoe management logic spread between Round and main(). Consolidate in a ShoeMgr class. The class has a shoe member variable and 3 methods: a constructor - public ShoeMgr(int deckCount), public Card drawCard(), and public void checkCutCard(). Upon completion, all access to Deck is via Shoe (i.e. Shoe encapsulates Deck), and ShoeMgr encapsulates Shoe.
 
-26. Notice both the player and the dealer are playing the same strategy. (Draw cards until >16.) Encapsulate this game play in a class called DealerHandStrategy. It has one method: "public void play(Hand hand, ShoeMgr shoeMgr)". (Later, we'll implement other game play strategies (such as PlayerInteractiveStrategy and PlayerBasicStrategy), and learn about inheritance and polymorphism.) Move your "while(hand.getScore() <= 16)" code block into this play method. (We haven't discussed how to output he game as it progresses. We'll tackle that next.)
+26. Notice both the player and the dealer are playing the same strategy. (Draw cards until >16.) Encapsulate this game play in a class called DealerHandStrategy. It has one method: "public void play(Hand hand, ShoeMgr shoeMgr)". (Later, we'll implement other game play strategies (such as PlayerInteractiveStrategy and PlayerBasicStrategy), and learn about inheritance and polymorphism.) Move your "while(hand.getScore() <= 16)" code block into this play method. (We haven't discussed how to output the game results as it progresses. We'll tackle that next.)
 
 27. In real blackjack, the player and dealer each get 2 cards (the dealer's second card being face down), before we start drawing cards. We only draw cards if neither gets a natural blackjack. Modify the Hand class: in the constructor, draw 2 cards. Also, add an "isDealer" parameter to the constructor; use the parameter to appropriately describe the hand ("System.out.println((isDealer ? "Dealer" : "Your") + " hand is:");"), and to mask the dealer's 2nd card ("System.out.println(isDealer ? "  ****") : "  " + card);"). Then, add a new method to the Hand class called "showDealerDowncard()" which simply println's the card. Finally, update Round's play method to emulate realworld game play: the player gets a new Hand (with 2 cards); the dealer gets a new Hand; if both blackjack, a tie (show the dealer downcard for proof); else if player blackjack, player wins; if dealer blackjack, dealer wins (show the dealer downcard); player draws cards (using "DealerHandStrategy playerHandStrategy"); if player didn't bust, dealer draws cards (using "DealerHandStrategy dealerHandStrategy"); if dealer didn't bust, compare scores.
 
@@ -238,7 +238,7 @@ playerArea.setPadding(new Insets(10));
 root.setBottom(playerArea);
 
 Finally, put root in your scene rather than your original vbox:
-Scene scene = new Scene(root, 500, 600);
+Scene scene = new Scene(root, 500, 800);
 
 Before running, add this temporary createCard helper method:
 
@@ -272,17 +272,19 @@ JACK(10, "J", "Jack"),
 48. Next, copy the class that creates graphical cards:
 
 48a. Take the CardFaceCreator class from https://gist.github.com/Roland09/e00f7e97852c9113877b
-48b. Remove the "package cards;" at the very top.
-48c. Remove the "createBackFace" method.
-48d. Add these constants to the class:
+48b. Add credit to the top of the file.
+48c. Remove the "package cards;" at the very top.
+48d. Remove the "createBackFace" method.
+48e. Add these constants to the class:
   public static double CARD_ARC = 12;
   public static double CARD_GRID_SYMBOL_SIZE = 30;
   public static double CARD_CENTER_SYMBOL_SIZE = 46;
   public static double CARD_CORNER_SYMBOL_SIZE = 14;
-48e. Fix references to suit.getName(). Ours is called suit.getSymbol().
-48f. Fix references to rank.getName(). Ours is called rank.getShortName().
-48g. Fix references to the enums. E.g., "case _2:" becomes "case TWO:"
-48h. Remove the references to "Settings." as the constants are now embedded in the class.
+48f. Fix references to suit.getName(). Ours is called suit.getSymbol().
+48g. Fix references to rank.getName(). Ours is called rank.getShortName().
+48h. Fix references to the enums. E.g., "case _2:" becomes "case TWO:"
+48i. Remove the references to "Settings." as the constants are now embedded in the class.
+48j. Play with the constants and the offsets in the algorithm. The default implementation seems to have suits on top of each other, especially with the 10 of Hearts. And J's are almost off the card.
 
 49. Modify main to create and display some dynamically generated hard-coded cards. Use code such as this in start():
 
@@ -311,8 +313,6 @@ card = CardFaceCreator.createFrontFace( Suit.SPADES, Rank.EIGHT, width, height);
 
 You can now also remove the temporary createCard method created earlier.
 
-
-TODO: edit step 50 so it's more specific. For example, I put these imports and made my own method called public static Node createBackFace(double width, double height), where all of it was it CardFaceCreator.java file rather than main. So some of the parameters in the code given below for step 50 is wrong. Copy what I have in the real code right now. Like the width and height parameters. Also the return cardView instead of the other stuff.
 50. Now we need the ability to render a card back.
 
 50a. Create a cardBack.png file. Have AI make one for you. Upload it to the project.
@@ -337,51 +337,134 @@ card = CardFaceCreator.createBackFace(width, height);
 
 51. Now it's time to connect the card renderer to our actual game.
 
-51a. Pass dealerCards.getChildren() and playerCards.getChildren into startGame(). These are of type "ObservableList<Node>". (The word 'observable' follows the Subject-Observer Design Pattern, which allows a Subject to 'observe' the nodes and be notified when something happens. This is how the JavaFX framework knows to update the screen rendering when we edit the list.)
+51a. Pass dealerCards.getChildren() and playerCards.getChildren into startGame(). These are of type "ObservableList<Node>" according to online documentation. (The word 'observable' follows the Subject-Observer Design Pattern, which allows a Subject to 'observe' the nodes and be notified when something happens. This is how the JavaFX framework knows to update the screen rendering when we edit the list.)
 51b. Import the types:
 import javafx.collections.ObservableList;
-import javafx.scene.Node;
-51c. clear() the dealerCards and playerCards before each round begins. (You can test the program here; the cards should be gone.)
-51d. Pass them into the Round constructor and update the constructor accordingly, saving the info as 2 private member variables. (Remember the 2 imports again.) Include the word Nodes in the member variable names so as not to confuse with the business logic. E.g., "dealerCardNodes".
-51e. Pass the dealerCardNodes into dealerHand and playerCardNodes into playerHand. Update the Hand class accordingly (import, constructor, member variable).
-51f. In the Hand constructor, we draw 2 cards. Just after the place we print the card details to the outputter, do the same with the graphical UI by calling CardFaceCreator:
-"cardNodes.add(CardFaceCreator.createFrontFace(card.getRank(), card.getSuit(), 120, 180));"
-Notice we say 120,180 again for the card dimensions. This redundant code should be fixed. In a perfect world, we would have predicted and thought through this situation. What just happened is common part of software development. We'll fix it later.
+Confirm the program runs (without visible changes).
+51c. Because we don't care about the "observable" parts of the API (i.e., we'll only care about basic list operations like add() and remove() and not something like notify()), and because ObservableList<> is-a List<>, we don't need to pass ObservableList around. Change startGame to accept List<Node> instead of ObservableList<Node>, and remove the import. Confirm the program still runs (because of the is-a property and polymorphism at work).
+51d. clear() the dealerCards and playerCards before each round begins. (You can test the program here; the cards should be gone.)d
+51e. Pass them into the Round constructor and update the constructor accordingly, saving the info as 2 private member variables. (You will need the "import javafx.scene.Node;" and "import java.util.*;" imports.) Include the word Nodes in the member variable names so as not to confuse with the business logic. E.g., "dealerCardNodes".
 
-TEMP: need to add getSuit() accessor to Hand. I updated step 31.
+51f. Pass the dealerCardNodes into dealerHand and playerCardNodes into playerHand. Update the Hand class accordingly (import, constructor, member variable).
+You will also need the same 2 imports.
 
-51g. There are 3 places where we call outputter.output in the Hand constructor. Make sure we similarly call CardFaceCreator. One of the places we create the face down card.
+51g. In the Hand constructor, we draw 2 cards. Just after the place we print the card details to the outputter, do the same with the graphical UI by calling CardFaceCreator:
+"cardNodes.add(CardFaceCreator.createFrontFace(card.getSuit(), card.getRank(), 120, 180));"
+There are 3 places where we call outputter.output in the Hand constructor. Make sure we similarly call CardFaceCreator. One of the places we create the face down card.
+Notice we say 120,180 again for the card dimensions. This redundant code should be fixed. In a perfect world, we would have predicted and thought through this situation. What just happened is a common part of software development. We'll fix it later.
+51h. While we aren't done rendering cards, the program should be executable right now. The 3 rendered face-up cards should match what is shown in the console!
+51i. In the start() method in main, remove the 4 hardcoded cards we created.
+51j. In the addCard method of Hand, also render that new card. This method is called by the Strategy classes to add the 3rd, 4th, etc cards. However, notice that addCard() is also called internally. We would be rendering the first 2 cards twice! (Run the program for confirmation.) Refactor the logic to only render in the addCard() method. You'll need to save isDealer as a member variable.
+addCard() would include logic such as:
+if (isDealer && cards.size() == 2)
+  cardNodes.add(CardFaceCreator.createBackFace(120, 180));
+else
+   cardNodes.add(
+      CardFaceCreator.createFrontFace(
+        card.getSuit(), card.getRank(), 120, 180));
+51k. Consolidate the outputter logic to use the same if/else. It probably requires cleaning up DealerHandStrategy as well.
+51l. In showDealerDownCard, remove the face down card and add the face up card. e.g., 
+    cardNodes.set(1, CardFaceCreator.createFrontFace(cards.get(1).getSuit(), cards.get(1).getRank(), 120, 180));
+(Run the program for confirmation. Because we use the DealerStrategy, it runs so fast that we won't see the face down card anymore, except when you bust!)
+51m. Now that the console matches the UI, comment out the redundant console entries. (We won't delete them, because later we can re-add them and re-target the console to the real console, which could be useful for debugging.) Upon completion, our fake console should just report the score, the winner, and when a new Shoe is created.
 
-51. Replace the implementation of PlayerInteractiveStrategy with the real implementation. While not busted and not hitting, ask the player if they want to Hit or Stand. Draw card(s) as appropriate given user requests. Use the ChoiceDialog. 
+52. Move cardWidth and cardHeight constants into CardFaceCreator, and update logic in Hand accordingly.
 
-52. Move cardwidth and cardHeight constants into CareFaceCreator, and update logic in Main and Hand accordingly.
+53. Let's add the score to the UI.
 
-52. Let's add wagers next. Add a GameOption for WAGER, setting it to 15. Create a simple Wager class, containing the Bet amount (initially 15) and a Payout. Pass Wager into the Round. play() should update the Wager ammounts as appropriate. A loss returns 0; a win returns 30 (wager*2); a tie returns 15 (wager); a surrender returns 7.5 (wager/2); a natural blackjack returns 37.5 (wager+wager*1.5); a double increases Bet to 30 but also increases a win to 60. (Later, Splits will also increase the Bet amount.)
+53a. Ask AI to create you a badge that contains the score. You can customize with colors and effects. Have the class name be ScoreBadge. It could inherit from StackPane. Have a public method setScore(Hand hand, int score).
+53b. The glow should only occur if hand.isBlackjack() and not anytime the score is 21.
+53c. At the end of the addCard() method, call a new method called showScoreBadge(). The implementation is as follows:
+ScoreBadge playerBadge = new ScoreBadge();
+playerBadge.setScore(this, getScore());
+cardNodes.add(playerBadge);
+53e. In the beginning of the addCard() method, remove any previously created badge as follows:
+if (cardNodes.size() > 0 && cardNodes.get(cardNodes.size()-1) instanceof ScoreBadge)
+{
+  cardNodes.remove(cardNodes.size()-1);
+}
+Note the use of the new keyword "instanceof". This is useful in polymorphic scenarios. In this case, we are interested to know if the Node is-a ScoreBadge.
+53e. If the player busts before the dealer has turned over his down card (aka his hole card), then we don't want to show the ScoreBadge. Add a boolean field called shouldShowScore. Initialize it to !isDealer in the constructor. In addCard, only call showScoreBadge() if shouldShowScore is true.
+53f. In showDealerDownCard(), set the shouldShowScore flag to true. Also, call showScoreBadge().
+53g. Once confirmed all is working, comment out the code in outputter that outputs the score. This is in DealerHandStrategy. You can also comment out "Your turn:" and "Dealer's turn" and blank line outputs in Round.
 
-53. Give the user the abiity to double. This doubles the stakes (double the wager; double the payout). When doubling, exactly one additional card is drawn.
+54. Java builds .class files from the .java files. These are subsequently cached between runs, improving build time performance. If a .java file changes, the system automatically recreates the .class file. However, sometimes it fails to recognize that the .class file is out-of-date, and we end up running an old version of software, leading to problems and confusion. Let's auto-delete all .class files every time we click Run.
+54a. In the "Files" list, click the ... and choose "Show Hidden Files". Open the ".replit" file.
+54b. There's a "compile" section and a "run" section. The Run button should compile as necessary, but sometimes it does not. Therefore, move the contents of the "compile =" into the "run =", and separate the two commands with " && ".
+54c. Next, delete all the .class files by prepending with this: "find . -name \"*.class\" -delete && ".
+54d. Comment out the "compile" line by prepending everything with #.
+54e. The final result should look like this:
+#compile = "javac --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls Main.java"
+run = "find . -name \"*.class\" -delete && javac --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls Main.java && java --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls Main"
+54f. Click Run and confirm the Files list shrinks as the .class files are deleted, then grows as the .class files are recreated, and then the product runs successfully.
+54g. Close the .replit file.
+54h. Click the ... in the Files list and choose "Hide Hidden files"
 
-54. Give the user the ability to surrender. The round ends; the user gets half their wager back. 
+55. Let's finalize the demise of the TextArea by moving the result text (e.g., "Blackjack!", "Busted", "You win", etc) into the "Play again?" dialog.
+55a. All remaining outputting (other than refilling the Shoe) should reside in Round. If any has leaked into the PlayStrategy classes, refactor that code first.
+55b. We need to present the results to the user, and probably add a message to the ChoiceDialog before asking "Play another round?". An enum such as WIN, LOSS, PUSH, BLACKJACK, and BUST kind of works, but it doesn't allow for providing more advanced messages in the future (such as "Wow! You had a 15 percent chance of winning that", or "You probably should have surrendered.", etc.) It would also pollute Main. It also wouldn't gracefully handle Splitting. (This touches on the art of appropriate software design.) Instead, create a class called RoundResultMessageCreator with a single method describeResult, which returns the string.
+55c. Call the method from Round.play(), passing in the 2 Hands, getting the result string, and passing it back to Main.
+55d. Main appends the message to the ChoiceDialog.
 
-55. Add a GameOption called BLACKJACK_MULTIPLIER. Set it to either 1.5 (for 3:2 payout) or 1.2 (for 6:5 payout)). Pass that into Round as well and update logic accordingly.
+56. We can now remove the TextArea from the UI.
+56a. Update the outputter in Main to go back to logging to the Console.
+56b. Uncomment all outputter code that had been commented out.
+56c. Remove the console TextArea from Main.
+56d. Shrink the size of the Scene accordingly.
 
-56. Add a starting bankroll. Add a GameOption called STARTING_BANKROLL for it. Default to 400. Update logic accordingly (in main()). If bankroll becomes 0, end the game.
+57. The image files are cluttering the project. Create a folder called resources and move them into it. Update code to find the image files in the new location.
 
-57. In addition to "1" to play again, allow the user to specify any number greater than 15 and less than their bankroll, to play again with the new default Bet amount.
+58. In Main, all the UI code can be refactored away. Create a class called BlackjackScene with one method Make() which returns the Scene. Update Main to use that.
 
-58. Let's implement (S)plit. Update Round to have a List<Hand> playerHands rather than a single hand. Upon Split, move the Player hand's 2nd card to the new Hand's first card, and give each hand a second card. Then have the Player play both Hands, using the singular Player Strategy against the single Dealer Hand.
+59. Replace the implementation of PlayerInteractiveStrategy with the real implementation. While not busted and not hitting, ask the player if they want to Hit or Stand. Draw card(s) as appropriate given user requests. Use the ChoiceDialog. 
 
-59. Only allow up to 4 Splits within a single Round.
+60. Let's add wagers next. Add a GameOption for MIN_BET, setting it to 15, and MAX_BET of 1000. Create a Wager class, containing the Bet amount (initially 15) and a Payout. Pass Wager into the Round. play() should update the Wager ammounts as appropriate. A loss returns 0; a win returns 30 (wager*2); a tie (aka push) returns 15 (wager); a surrender returns 7.5 (wager/2); a natural blackjack returns 37.5 (wager+wager*1.5) or 33 (wager+wager*1.2); a double increases Bet to 30 but also increases a win to 60. (Later, Splits will also increase the Bet amount.) Rename RoundResultMessageCreator to RoundResultAnalyzer and put this wager logic in that class. Include the result in the "Play Again?" message.
 
-60. If Splitting Aces, only allow a single additional card.
+61. If they elect to play again, ask for the wager amount. Require a multiple of 5, and less than 500, and at least 15. Add the min and max to GameOptions. You will need another dialog like the ChoiceDialog. AI can make it for you. Call it in the do...while loop in Main, just after the table is cleared. Call it as follows: "Integer bet = BetDialog(stage, GameOptions.MinBet, GameOptions.MaxBet);". Use the selected wager in the next bet.
 
-61. Create a HintMgr class with a single method checkForHint(), accepting the Player Hand and the Dealer Hand. Build a library of Hints, some of which are generic and others which are specific to the Hands. Do not show the same hint more than once. Examples of Hints: "Hint: It is generally advisable to always split 8s." "It is generally advisable to always split Aces." "You can use Spacebar to Hit and Enter to Stand."
+62. Display chips in that dialog matching the wager choice. Have AI create chips in $1, $2.50 (pink), $5 (red), $25 (green), $100(black), $500(purple), and $1000(orange). Have an algorithm, called a greedy algorithm, determine the chips to show. (Repeatedly use the highest denomination as long as it's below the requested amounted, then move to the next denomination. Use either a for-loop or recursion.)
 
-62. Some casinoes Hit on Soft-17; others do not. Make this a GameOption and implement it in the DealerHandStrategy.
+63. Add a white betting circle:
+Circle betCircle = new Circle(40, Color.TRANSPARENT);
+betCircle.setStroke(Color.WHITE);
+betCircle.setStrokeWidth(3);
+betCircle.setCenterX(300);
+betCircle.setCenterY(400);
+Place it in the same VBox as the Player Area.
 
-63. Implement PlayerBasicHandStrategy class.
+64. Render the same chips identified in the earlier step, in the betting cirle.
 
-64. Provide a tip when the player deviates from Basic Strategy. This means you'll need to "quietly" play the PlayerBasicHandStrategy at the same time as the PlayerInteractiveHandStrategy.
+65. Add a starting bankroll. Add a GameOption called STARTING_BANKROLL for it. Default to 400. Update logic accordingly (in main()). Display the remaining money in the Scene. If bankroll becomes 0, end the game (or give the user the choice to go to the ATM).
 
-65. When asking if they wish to play again, provide an option to update settings. If the user choose that, provide a menu of settings they can modify: Bonus on Blackjack, Dealer Hit on Soft-17
+66. Give the user the abiity to double. This doubles the stakes (double the wager; double the payout). When doubling, exactly one additional card is drawn.
+
+67. Give the user the ability to surrender. The round ends; the user gets half their wager back. 
+
+68. Add a GameOption called BLACKJACK_MULTIPLIER. Set it to either 1.5 (for 3:2 payout) or 1.2 (for 6:5 payout)). Pass that into Round as well and update logic accordingly.
+
+69. In addition to "1" to play again, allow the user to specify any number greater than 15 and less than their bankroll, to play again with the new default Bet amount.
+
+70. Let's implement (S)plit. Update Round to have a List<Hand> playerHands rather than a single hand. Upon Split, move the Player hand's 2nd card to the new Hand's first card, and give each hand a second card. Then have the Player play both Hands, using the singular Player Strategy against the single Dealer Hand.
+
+71. Only allow up to 4 Splits within a single Round.
+
+72. If Splitting Aces, only allow a single additional card.
+
+73. Create a HintMgr class with a single method checkForHint(), accepting the Player Hand and the Dealer Hand. Build a library of Hints, some of which are generic and others which are specific to the Hands. Do not show the same hint more than once. Examples of Hints: "Hint: It is generally advisable to always split 8s." "It is generally advisable to always split Aces." "You can use Spacebar to Hit and Enter to Stand."
+
+74. Some casinoes Hit on Soft-17; others do not. Make this a GameOption and implement it in the DealerHandStrategy.
+
+75. Implement PlayerBasicHandStrategy class.
+
+76. Provide a tip when the player deviates from Basic Strategy. This means you'll need to "quietly" play the PlayerBasicHandStrategy at the same time as the PlayerInteractiveHandStrategy.
+
+77. Provide a settings gear somewhere. If the user chose that, provide a menu of settings they can modify: Bonus on Blackjack, Dealer Hit on Soft-17, Felt Color, Card back, etc.
+
+78. Add sound effects. Countless sample library is here: https://www.soundsnap.com/tags/poker_chips
+https://pixabay.com/sound-effects/search/poker%20chips
+
+
+
+
 
 

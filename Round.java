@@ -1,15 +1,15 @@
-import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import java.util.*;
 
 public class Round
 {
   private IOutputter outputter;
   private ShoeMgr shoeMgr;
   private HandStrategy playerHandStrategy;
-  private ObservableList<Node> dealerCardNodes;
-  private ObservableList<Node> playerCardNodes;
+  private List<Node> dealerCardNodes;
+  private List<Node> playerCardNodes;
 
-  Round(IOutputter outputter, ShoeMgr shoeMgr, HandStrategy playerHandStrategy, ObservableList<Node> dealerCardNodes, ObservableList<Node> playerCardNodes)
+  public Round(IOutputter outputter, ShoeMgr shoeMgr, HandStrategy playerHandStrategy, List<Node> dealerCardNodes, List<Node> playerCardNodes)
   {
     this.outputter = outputter;
     this.shoeMgr = shoeMgr;
@@ -18,55 +18,70 @@ public class Round
     this.playerCardNodes = playerCardNodes;
   }
 
-  public void play()
+  public String play()
   {
+    String result = "";
     Hand playerHand = new Hand(outputter, shoeMgr, false, playerCardNodes);
     Hand dealerHand = new Hand(outputter, shoeMgr, true, dealerCardNodes);
 
     if (playerHand.isBlackjack() && dealerHand.isBlackjack())
     {
-      outputter.output("It's a tie!");
+      result = "It's a tie!";
+      outputter.output(result);
       dealerHand.showDealerDownCard();
-      return;
+      return result;
     }
     if (playerHand.isBlackjack())
     {
-      outputter.output("Blackjack! You win!");
-      return;
+      result = "Blackjack! You win!";
+      outputter.output(result);
+      return result;
     }
     if (dealerHand.isBlackjack())
     {
+      result = "Dealer Blackjack! You lost!";
       dealerHand.showDealerDownCard();
-      outputter.output("Dealer Blackjack! You lost!");
-      return;
+      outputter.output(result);
+      return result;
     }
 
-    outputter.output("Your turn:");
+    //outputter.output("Your turn:");
     playerHandStrategy.play(playerHand, shoeMgr);
 
+    outputter.output("Your score is: " + playerHand.getScore());
+    
     if (playerHand.isBusted())
     {
-      outputter.output("\nYou lost!");
-      return;
+      result = "Busted! You lost!";
+      outputter.output(result);
+      return result;
     }
 
-    outputter.output("");
-    outputter.output("Dealer's turn:");
+    //outputter.output("");
+   // outputter.output("Dealer's turn:");
     DealerHandStrategy dealerHandStrategy = new DealerHandStrategy(outputter);
     dealerHand.showDealerDownCard();
     dealerHandStrategy.play(dealerHand, shoeMgr);
-    outputter.output("");
+   // outputter.output("");
+
+    //    outputter.output("");
+     //  outputter.output("Score is: " + hand.getScore());
+    
     if (dealerHand.isBusted())
     {
-      outputter.output("You win!");
-      return;
+      result = "Dealer Busted! You won!";
+      outputter.output(result);
+      return result;
     }
 
     if (playerHand.getScore() > dealerHand.getScore())
-      outputter.output("You won!");
+      result = "You won!";
     else if (playerHand.getScore() < dealerHand.getScore())
-      outputter.output("You lost!");
+      result = "You lost!";
     else
-      outputter.output("It's a tie!");
+      result = "It's a tie!";
+    outputter.output(result);
+    return result;
+   //   RoundResultMessageCreator.describeResult(playerHand, dealerHand);
   }
 }

@@ -1,3 +1,5 @@
+// Credit to: https://gist.github.com/Roland09/e00f7e97852c9113877b
+
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.VPos;
@@ -15,16 +17,18 @@ import javafx.scene.text.TextBoundsType;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
+
 /**
  * Create card faces that consist solely of JavaFX code, no images.
  * You can easily exchange this class against another card face creator that creates the faces from images if you wish.
  */
 public class CardFaceCreator {
-  public static double CARD_ARC = 12;
+  public static double CARD_ARC = 22;
   public static double CARD_GRID_SYMBOL_SIZE = 30;
   public static double CARD_CENTER_SYMBOL_SIZE = 46;
   public static double CARD_CORNER_SYMBOL_SIZE = 14;
-
+  public static double CARD_WIDTH = 120;
+  public static double CARD_HEIGHT = 180;
 
   /**
    * Create the front face of the card.
@@ -34,29 +38,30 @@ public class CardFaceCreator {
    * @param height
    * @return
    */
-  public static Node createFrontFace( Suit suit, Rank rank, double width, double height) {
+  public static Node createFrontFace(Suit suit, Rank rank)
+  {
 
     CardFace face = new CardFace();
 
-    Shape shape = createShape( width, height);
+    Shape shape = createShape(CARD_WIDTH, CARD_HEIGHT);
     shape.setFill( Color.WHITE);
 
-    face.getChildren().add( shape);
+    face.getChildren().add(shape);
 
-    addCornerText( face, suit, rank, width, height);
-    addCenterItems( face, suit, rank, width, height);
+    addCornerText( face, suit, rank, CARD_WIDTH, CARD_HEIGHT);
+    addCenterItems( face, suit, rank, CARD_WIDTH, CARD_HEIGHT);
 
     return face; 
   }
 
   // Back of Card PNG calling.
-  public static Node createBackFace(double width, double height)
+  public static Node createBackFace()
   {
-    Image cardImage = new Image("card_back2.png");
+    Image cardImage = new Image("card_back4.png");
     ImageView cardView = new ImageView(cardImage);
-    cardView.setFitWidth(width);
-    cardView.setFitHeight(height);
-    cardView.setPreserveRatio(true);
+    cardView.setFitWidth(CARD_WIDTH);
+    cardView.setFitHeight(CARD_HEIGHT);
+//    cardView.setPreserveRatio(true);
     return cardView;
   }
   
@@ -94,17 +99,18 @@ public class CardFaceCreator {
     Text suitText;
 
     // center suit text below rank text (6 is just an arbitrary value)
-    double offsetY = 6;
+    double rankOffsetY = 4;
+    double offsetY = 0;
 
     // top left
     // -----------------
     rankText = createText(rank.getShortName(), suit, CARD_CORNER_SYMBOL_SIZE);
     rankText.setRotate(0);
-    rankText.relocate(4, 0);
+    rankText.relocate(6, rankOffsetY);
 
     suitText = createText(suit.getSymbol(), suit, CARD_CORNER_SYMBOL_SIZE);
     rankText.setRotate(0);
-    suitText.relocate( rankText.getBoundsInParent().getMinX() + (rankText.getBoundsInParent().getWidth() - suitText.getBoundsInParent().getWidth()) / 2.0, rankText.getBoundsInParent().getMaxY() - offsetY);
+    suitText.relocate( rankText.getBoundsInParent().getMinX() + (rankText.getBoundsInParent().getWidth() - suitText.getBoundsInParent().getWidth()) / 2.0, rankText.getBoundsInParent().getMaxY() + offsetY);
 
     face.getChildren().addAll( rankText,suitText);
 
@@ -112,11 +118,11 @@ public class CardFaceCreator {
     // -----------------
     rankText = createText(rank.getShortName(), suit, CARD_CORNER_SYMBOL_SIZE);
     rankText.setRotate(180);
-    rankText.relocate( width - rankText.getBoundsInParent().getWidth() - 4, height - rankText.getBoundsInParent().getHeight());
+    rankText.relocate( width - rankText.getBoundsInParent().getWidth() - 6, height - rankText.getBoundsInParent().getHeight() - rankOffsetY);
 
     suitText = createText(suit.getSymbol(), suit, CARD_CORNER_SYMBOL_SIZE);
     suitText.setRotate(180);
-    suitText.relocate( rankText.getBoundsInParent().getMaxX() - (rankText.getBoundsInParent().getWidth() + suitText.getBoundsInParent().getWidth()) / 2.0, rankText.getBoundsInParent().getMinY() - suitText.getBoundsInParent().getHeight() + offsetY);
+    suitText.relocate( rankText.getBoundsInParent().getMaxX() - (rankText.getBoundsInParent().getWidth() + suitText.getBoundsInParent().getWidth()) / 2.0, rankText.getBoundsInParent().getMinY() - suitText.getBoundsInParent().getHeight() - offsetY);
 
     face.getChildren().addAll( rankText,suitText);
 
@@ -204,7 +210,7 @@ public class CardFaceCreator {
       gridPane.setHgap(0);
       gridPane.setVgap(0);
       gridPane.setPrefSize( width, height);
-      gridPane.setPadding(new Insets(10));
+      gridPane.setPadding(new Insets(17));
 
       switch( rank) {
       case TWO:

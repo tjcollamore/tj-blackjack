@@ -9,19 +9,11 @@ public class DealerHandStrategy implements HandStrategy
   
   public void play(Hand hand, ShoeMgr shoeMgr)
   {
+//    outputter.output("Drawn card(s):");
     while (hand.getScore() <= 16)
     {
       Card card = shoeMgr.drawCard();
-      outputter.output("Drawn card: " + card);
       hand.addCard(card);
-    }
-    outputter.output("Score is: " + hand.getScore());
-    if (hand.isBlackjack())
-      outputter.output("Blackjack!");
-    else
-    {
-      if (hand.isBusted())
-        outputter.output("Busted!");
     }
   }
 }
