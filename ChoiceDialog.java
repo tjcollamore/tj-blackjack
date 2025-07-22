@@ -28,7 +28,7 @@ public class ChoiceDialog
         content.setBackground(new Background(new BackgroundFill(Color.web("#f9f9f9"), CornerRadii.EMPTY, Insets.EMPTY)));
 
         Text text = new Text(message);
-        text.setStyle("-fx-font-size: 16px; -fx-fill: #333;");
+        text.setStyle("-fx-font-size: 16px; -fx-fill: #333; -fx-text-alignment: center;");
 
         HBox buttons = new HBox(10);
         buttons.setAlignment(Pos.CENTER);
