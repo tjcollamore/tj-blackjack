@@ -16,6 +16,7 @@ public class BlackjackSceneCreator
 {
   private HBox dealerCards = new HBox(10);
   private HBox playerCards = new HBox(10);
+  private Label bankrollLabel = new Label();
   
   public Scene create()
   {
@@ -47,6 +48,14 @@ public class BlackjackSceneCreator
     playerArea.setPadding(new Insets(10));
     root.setBottom(playerArea);
 
+    // Setup bankroll display
+    setupBankrollDisplay();
+    VBox leftPanel = new VBox(10);
+    leftPanel.setPadding(new Insets(20));
+    leftPanel.setAlignment(Pos.TOP_CENTER);
+    leftPanel.getChildren().add(bankrollLabel);
+    root.setLeft(leftPanel);
+
     Scene scene = new Scene(root, 500, 600);
     return scene;
   }
@@ -59,6 +68,29 @@ public class BlackjackSceneCreator
   public List<Node> getPlayerCards()
   {
     return playerCards.getChildren();
+  }
+
+  public Label getBankrollLabel()
+  {
+    return bankrollLabel;
+  }
+
+  private void setupBankrollDisplay()
+  {
+    bankrollLabel.setText("$0.00");
+    bankrollLabel.setStyle(
+        "-fx-font-size: 18px;" +
+        "-fx-font-weight: bold;" +
+        "-fx-text-fill: #FFD700;" +
+        "-fx-background-color: rgba(0, 0, 0, 0.7);" +
+        "-fx-background-radius: 10px;" +
+        "-fx-padding: 10px 15px;" +
+        "-fx-border-color: #FFD700;" +
+        "-fx-border-width: 2px;" +
+        "-fx-border-radius: 10px;"
+    );
+    bankrollLabel.setPrefWidth(120);
+    bankrollLabel.setAlignment(Pos.CENTER);
   }
   
 }
