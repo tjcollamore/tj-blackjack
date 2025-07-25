@@ -30,14 +30,14 @@ public class Round
 
     if (!playerHand.isBlackjack() && !dealerHand.isBlackjack())
     {
-      playerHandStrategy.play(playerHand, shoeMgr);
+      playerHandStrategy.play(playerHand, wager, shoeMgr);
       outputter.output("Your score is: " + playerHand.getScore());
       
-      if (!playerHand.isBusted())
+      if (!playerHand.isBusted() && !wager.didSurrender())
       {
         DealerHandStrategy dealerHandStrategy = new DealerHandStrategy();
         dealerHand.showDealerDownCard();
-        dealerHandStrategy.play(dealerHand, shoeMgr);
+        dealerHandStrategy.play(dealerHand, wager, shoeMgr);
         outputter.output("Dealer score is: " + dealerHand.getScore());
       }
     }    

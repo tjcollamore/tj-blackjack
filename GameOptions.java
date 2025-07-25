@@ -7,5 +7,6 @@ public class GameOptions
   public static final int MIN_BET = 15;
   public static final int MAX_BET = 1000;
   public static final double BLACKJACK_PAYOUT = 2.5;
+  public static final double BLACKJACK_MULTIPLIER = BLACKJACK_PAYOUT - 1;
   public static final int STARTING_BANKROLL = 400;
 }

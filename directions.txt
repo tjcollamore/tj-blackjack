@@ -485,18 +485,29 @@ TODO: add to directions: initialize betAmount with previous betAmount
 TODO: add to directions:
 Get rid of cancel button when player tries to bet money. It would crash when you click it anyways
 
+TODO: fix color of buttons: stand, surrender, hit, etc.
+make cool colors as well
+
+TODO: fix the size of the ChoiceDiaglogue text so it doesn't cover the Bankroll
+
+TODO: add to program and directions:
+Show soft ace on the badge
+(e.g.  "7/17" on badge or "S17")
+
 TODO: add directions:
 When getting blackjack, and your bankroll has non-multiple of 5 (like $422.50), selecting highest/max money would allow user to select 422 as max bet. Then clicking down arrow would make bet go down by 5's from 422 (like 417,412) -all trash. Fix this by making max bet a multiple of 5 in BetDiaglog
 
 67. If bankroll becomes 0, end the game (or give the user the choice to go to the ATM).
 
+TODO: try your best to add instructions for 68! (Doubling)
+All that coding we did that late night!
 68. Give the user the abiity to double. This doubles the stakes (double the wager; double the payout). When doubling, exactly one additional card is drawn.
 
-68. Give the user the ability to surrender. The round ends; the user gets half their wager back. 
+69. Give the user the ability to surrender. The round ends; the user gets half their wager back. 
 
-69. Add a GameOption called BLACKJACK_MULTIPLIER. Set it to either 1.5 (for 3:2 payout) or 1.2 (for 6:5 payout)). Pass that into Round as well and update logic accordingly.
+70a. Add a GameOption called BLACKJACK_MULTIPLIER. Set it to either 1.5 (for 3:2 payout) or 1.2 (for 6:5 payout)). Pass that into Round as well and update logic accordingly.
 
-70. In addition to "1" to play again, allow the user to specify any number greater than 15 and less than their bankroll, to play again with the new default Bet amount.
+70b. In addition to "1" to play again, allow the user to specify any number greater than 15 and less than their bankroll, to play again with the new default Bet amount.
 
 71. Let's implement (S)plit. Update Round to have a List<Hand> playerHands rather than a single hand. Upon Split, move the Player hand's 2nd card to the new Hand's first card, and give each hand a second card. Then have the Player play both Hands, using the singular Player Strategy against the single Dealer Hand.
 

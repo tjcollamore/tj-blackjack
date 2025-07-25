@@ -18,6 +18,10 @@ public class RoundResultAnalyzer
       result = "Dealer Blackjack! You lost!";
       wager.lose();
     }
+    else if (wager.didSurrender)
+    {
+      result = "You surrendered!";
+    }
     else if (playerHand.isBusted())
     {
       result = "Busted! You lost!";
