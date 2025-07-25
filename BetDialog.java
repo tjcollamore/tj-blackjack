@@ -95,6 +95,7 @@ public class BetDialog
                 dialogStage.setX(ownerStage.getX() + ownerStage.getWidth() / 2 - dialogStage.getWidth() / 2 + offsetX);
                 double offsetY = -90;
                 dialogStage.setY(ownerStage.getY() + ownerStage.getHeight() / 2 - dialogStage.getHeight() / 2 + offsetY);
+                submit.requestFocus();
             });
         });
 
