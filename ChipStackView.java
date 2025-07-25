@@ -7,14 +7,18 @@ import javafx.scene.layout.Pane;
 import javafx.scene.text.Font;
 import java.util.List;
 
-public class ChipStackView extends VBox {
+public class ChipStackView extends VBox 
+{
 
-    public ChipStackView(List<WagerChip> chips) {
+    public ChipStackView(List<WagerChip> chips)
+    {
         HBox stackRow = new HBox();
         double spacing = 8.0;
 
-        for (WagerChip chip : chips) {
-            for (int i = 0; i < chip.getCount(); i++) {
+        for (WagerChip chip : chips)
+        {
+            for (int i = 0; i < chip.getCount(); i++) 
+            {
                 ImageView chipView = new ImageView(new Image(chip.getImagePath()));
                     //getClass().getResource(chip.getImagePath()).toExternalForm()));
 //                chipView.setFitWidth(40);

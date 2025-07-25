@@ -11,45 +11,52 @@ import javafx.scene.effect.Effect;
 import javafx.scene.paint.Color;
 import javafx.animation.PauseTransition;
 
-public class ScoreBadge extends StackPane {
-
+public class ScoreBadge extends StackPane
+{
     private final Label label;
     private final Circle background;
-
-    public ScoreBadge() {
+    
+    public ScoreBadge()
+    {
         label = new Label("0");
         label.setFont(Font.font("Arial", 14));
         label.setTextFill(Color.WHITE);
-
-        background = new Circle(15); // Radius
+    
+        background = new Circle(15);
         background.setFill(Color.DARKGREEN);
         background.setStroke(Color.GOLD);
         background.setStrokeWidth(2);
-
+    
         this.getChildren().addAll(background, label);
         this.setPrefSize(30, 30);
     }
-
-    public void setScore(Hand hand, int score) {
-        if (hand.isBusted()) {
+    
+    public void setScore(Hand hand, int score)
+    {
+        if (hand.isBusted())
+        {
             setText(String.valueOf(score), Color.DARKRED);
-        } else if (hand.isBlackjack()) {
+        } else if (hand.isBlackjack())
+        {
             setText(String.valueOf(score), Color.BLACK);
             playGlow();
-        } else {
+        } else
+        {
             setText(String.valueOf(score), Color.DARKSLATEBLUE);
         }
     }
-    public void setText(String text, Color bgColor) {
+    public void setText(String text, Color bgColor)
+    {
         label.setText(text);
         animate(bgColor);
     }
-
-    private void animate(Color newColor) {
+    
+    private void animate(Color newColor)
+    {
         // Animate fill color
         FillTransition fill = new FillTransition(Duration.millis(300), background, (Color) background.getFill(), newColor);
         fill.play();
-
+    
         // Animate bounce
         ScaleTransition scale = new ScaleTransition(Duration.millis(200), this);
         scale.setFromX(1.0);
@@ -60,21 +67,22 @@ public class ScoreBadge extends StackPane {
         scale.setCycleCount(2);
         scale.play();
     }
-
-    private void playGlow() {
+    
+    private void playGlow()
+    {
         DropShadow glow = new DropShadow();
         glow.setColor(Color.WHITE);
         glow.setRadius(12);
         glow.setSpread(0.5);
         glow.setOffsetX(0);
         glow.setOffsetY(0);
-
+    
         // Set the glow
         this.setEffect(glow);
-/*
-        // Optional: remove glow after a moment (e.g., 2 seconds)
+    /*
+        Optional: remove glow after a moment (e.g., 2 seconds)
         PauseTransition pause = new PauseTransition(Duration.seconds(2));
         pause.setOnFinished(e -> this.setEffect(null));
-        pause.play();
-*/    }
+        pause.play();     */
+    }
 }

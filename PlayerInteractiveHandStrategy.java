@@ -1,33 +1,20 @@
-import java.util.Scanner;
+import javafx.stage.Stage;
 
 public class PlayerInteractiveHandStrategy implements HandStrategy
 {
-  private IOutputter outputter;
+  private Stage stage;
 
-  public PlayerInteractiveHandStrategy(IOutputter outputter)
+  public PlayerInteractiveHandStrategy(Stage stage)
   {
-    this.outputter = outputter;
+    this.stage = stage;
   }
   
   public void play(Hand hand, ShoeMgr shoeMgr)
-  {
-    Scanner reader = new Scanner(System.in);
-    String instruction;
-
-    do 
+  { 
+    while (!hand.isBusted() && !hand.is21() && ChoiceDialog.show(stage, "Do you want to stand or hit?", "Stand", "Hit").equals("Hit"))
     {
-      outputter.output("Do you want to stand (enter key) or hit (space bar)?");
-      instruction = reader.nextLine();
-      if (instruction.equals(""))
-        break;
-      if (!instruction.equals(" "))
-      {
-        outputter.output("Invalid input");
-        continue;
-      }
       Card card = shoeMgr.drawCard();
-      outputter.output("Drawn card: " + card);
       hand.addCard(card);
-    } while (!hand.isBusted());
+    }
   }
 }

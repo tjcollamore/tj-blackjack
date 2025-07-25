@@ -22,7 +22,6 @@ public class ShoeMgr
       shoe = new Shoe(DeckCount);
       card = shoe.drawCard();
     }
-
     return card;
   }
 

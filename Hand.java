@@ -17,20 +17,18 @@ public class Hand
     this.cardNodes = cardNodes;
     this.shouldShowScore = !isDealer;
     
-//    outputter.output((isDealer ? "Dealer" : "Your") + " hand is:");
-
     Card card = shoeMgr.drawCard();
     addCard(card);
     
     card = shoeMgr.drawCard();
     addCard(card);
 
- //   outputter.output("");
+    outputter.output("");
   }
 
   public void showDealerDownCard()
   {
-//    outputter.output("Dealer down card: " + cards.get(1));
+    outputter.output("Dealer down card: " + cards.get(1));
     
     cardNodes.set(1, CardFaceCreator.createFrontFace(cards.get(1).getSuit(), cards.get(1).getRank()));
 
@@ -50,12 +48,15 @@ public class Hand
     if (isDealer && cards.size() == 2)
     {
       cardNodes.add(CardFaceCreator.createBackFace());
-//      outputter.output("  <Face Down>");
+      outputter.output("Dealer drawn card: <Face Down>");
     }
     else
     {
       cardNodes.add(CardFaceCreator.createFrontFace(card.getSuit(), card.getRank()));
- //     outputter.output("  " + card);
+      if (isDealer)
+        outputter.output("Dealer drawn card: " + card);
+      else
+        outputter.output("Your drawn card: " + card);
     }
   
     if (card.isAce())
@@ -98,6 +99,11 @@ public class Hand
 
   public boolean isBlackjack()
   {
-    return getScore() == 21 && cards.size() == 2;
+    return is21() && cards.size() == 2;
+  }
+
+  public boolean is21()
+  {
+    return getScore() == 21;
   }
 }

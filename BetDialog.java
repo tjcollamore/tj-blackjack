@@ -10,9 +10,25 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
-public class BetDialog {
+public class BetDialog
+{
+    private static int previousBet = GameOptions.MIN_BET;
+    
+    public static int show(Stage ownerStage, int minBet, int maxBet)
+    {
+        // Round down to nearest 5
+        maxBet -= maxBet % 5;
 
-    public static Integer show(Stage ownerStage, int minBet, int maxBet) {
+        // Cap the default selection to the max bet
+        if (previousBet > maxBet)
+            previousBet = maxBet;
+
+        
+        //should not happen,
+        //unless min bet allowed to change
+        if (previousBet < minBet)
+            previousBet = minBet;
+        
         final Integer[] result = {null};
 
         StackPane overlay = new StackPane();
@@ -27,8 +43,8 @@ public class BetDialog {
         Text prompt = new Text("Select your wager:");
         prompt.setStyle("-fx-font-size: 16px; -fx-fill: #333;");
 
-        Spinner<Integer> spinner = new Spinner<>(minBet, maxBet, minBet, 5);
-        spinner.setEditable(true);
+        Spinner<Integer> spinner = new Spinner<>(minBet, maxBet, previousBet, 5);
+        spinner.setEditable(false);
         spinner.setPrefWidth(150);
 
         HBox chipPreview = new HBox(); // You can draw chips here later
@@ -40,22 +56,23 @@ public class BetDialog {
         buttons.setAlignment(Pos.CENTER);
 
         Button submit = new Button("Submit");
-        Button cancel = new Button("Cancel");
+//        Button cancel = new Button("Cancel");
 
         applyButtonStyles(submit, "#007bff", "#339af0");
-        applyButtonStyles(cancel, "#6c757d", "#868e96");
+//        applyButtonStyles(cancel, "#6c757d", "#868e96");
 
         submit.setOnAction(e -> {
             result[0] = spinner.getValue();
+            previousBet = spinner.getValue();
             ((Stage) content.getScene().getWindow()).close();
         });
-
+/*
         cancel.setOnAction(e -> {
             result[0] = null;
             ((Stage) content.getScene().getWindow()).close();
         });
-
-        buttons.getChildren().addAll(submit, cancel);
+*/
+        buttons.getChildren().addAll(submit/*, cancel*/);
         content.getChildren().addAll(prompt, spinner, chipPreview, buttons);
 
         StackPane dialogBox = new StackPane();
@@ -117,7 +134,8 @@ public class BetDialog {
         });
     }
 
-    private static class Delta {
+    private static class Delta
+    {
         double x, y;
     }
 }

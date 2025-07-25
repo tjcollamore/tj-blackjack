@@ -14,8 +14,6 @@ import javafx.scene.shape.Circle;
 
 public class Main extends Application 
 { 
-  private TextArea console;
-
   public static void main(String[] args)
   {
     launch(args);
@@ -24,74 +22,52 @@ public class Main extends Application
   @Override
   public void start(Stage primaryStage)
   {
-      BorderPane root = new BorderPane();
-      root.setStyle(
-          "-fx-background-image: url('felt_green.png');" +
-          "-fx-background-repeat: repeat;" +
-          "-fx-background-size: auto;" +
-          "-fx-background-position: center;");
-    
-      HBox dealerCards = new HBox(10);
-      dealerCards.setPadding(new Insets(5));
-      dealerCards.setAlignment(Pos.CENTER);
-      
-      VBox dealerArea = new VBox(5, dealerCards);
-      dealerArea.setAlignment(Pos.CENTER);
-      dealerArea.setPadding(new Insets(10));
-      root.setTop(dealerArea);
+    BlackjackSceneCreator sceneCreator = new BlackjackSceneCreator();
+    Scene scene = sceneCreator.create();
 
-      HBox playerCards = new HBox(10);
-      playerCards.setPadding(new Insets(5));
-      playerCards.setAlignment(Pos.CENTER);
+    primaryStage.setTitle("TJ's Blackjack!");
+    primaryStage.setScene(scene);
+    primaryStage.show();
     
-      console = new TextArea();
-      console.setPrefWidth(400);
-      console.setPrefHeight(200);
-      console.setEditable(false);
-      console.setWrapText(true);
-      console.setStyle("""
-          -fx-font-family: 'Consolas';
-          -fx-font-size: 14px;
-          -fx-background-color: #ffffff;
-          -fx-text-fill: #333;
-          -fx-border-color: #ccc;
-          -fx-border-radius: 4px;
-          -fx-background-radius: 4px;
-          -fx-focus-color: transparent;
-          -fx-faint-focus-color: transparent;
-      """);
-
-    
-      VBox playerArea = new VBox(5, playerCards, console);
-      playerArea.setAlignment(Pos.TOP_CENTER);
-      playerArea.setPadding(new Insets(10));
-      root.setBottom(playerArea);
-    
-      Scene scene = new Scene(root, 500, 800);
-      primaryStage.setTitle("TJ's Blackjack!");
-      primaryStage.setScene(scene);
-      primaryStage.show();
-
-      startGame(primaryStage, dealerCards.getChildren(), playerCards.getChildren());
+    startGame(primaryStage, sceneCreator.getDealerCards(),  sceneCreator.getPlayerCards());
   }
 
   private void startGame(Stage stage, List<Node> dealerCardNodes, List<Node> playerCardNodes)
   {
-    IOutputter outputter = new TextAreaOutputter(console);
+    IOutputter outputter = new ConsoleOutputter();
     ShoeMgr shoeMgr = new ShoeMgr(outputter, GameOptions.DECKS_IN_SHOE);
-    HandStrategy playerHandStrategy = new DealerHandStrategy(outputter);
+    HandStrategy playerHandStrategy = new PlayerInteractiveHandStrategy(stage);
 
+    double playerBankroll = GameOptions.STARTING_BANKROLL;
     String resultMessage;
+    Wager wager = new Wager(GameOptions.MIN_BET);
+   
     do
     {
-      console.clear();
+      outputter.output("Player bankroll: " + Wager.getFormattedCurrency(playerBankroll));
       dealerCardNodes.clear();
       playerCardNodes.clear();
 
-      Round round = new Round(outputter, shoeMgr, playerHandStrategy, dealerCardNodes, playerCardNodes);
+      if (playerBankroll < GameOptions.MIN_BET)
+      {
+        outputter.output("You do not have enough funds. Withdrawing another $" + GameOptions.STARTING_BANKROLL  + " from the ATM.");
+        playerBankroll += GameOptions.STARTING_BANKROLL;
+        outputter.output("Player bankroll: " + Wager.getFormattedCurrency(playerBankroll));
+      }
+
+      int maxBet = Math.min((int)playerBankroll, GameOptions.MAX_BET);
+      wager.setBetAmount(BetDialog.show(stage, GameOptions.MIN_BET, maxBet));
+      outputter.output("Player bet: $" + wager.getBetAmount());
+      playerBankroll -= wager.getBetAmount();
+  
+      Round round = new Round(outputter, shoeMgr, playerHandStrategy, dealerCardNodes, playerCardNodes, wager);
+    
       resultMessage = round.play();
+      playerBankroll += wager.getPayout();
+      outputter.output("Player bankroll: " + Wager.getFormattedCurrency(playerBankroll));
+      outputter.output("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
       shoeMgr.checkCutCard();
-    } while (ChoiceDialog.show(stage, resultMessage + "\nPlay another round?", "Deal", "Exit").equals("Deal"));
+    } while (ChoiceDialog.show(stage, resultMessage + "\nYour payout is: " + wager.getFormattedPayout() + "\nPlay another round?", "Deal", "Exit").equals("Deal"));
 
     Platform.exit();
   }    

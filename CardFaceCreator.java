@@ -1,5 +1,4 @@
-// Credit to: https://gist.github.com/Roland09/e00f7e97852c9113877b
-
+// Front Card Source: https://gist.github.com/Roland09/e00f7e97852c9113877b
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.VPos;
@@ -17,12 +16,8 @@ import javafx.scene.text.TextBoundsType;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
-
-/**
- * Create card faces that consist solely of JavaFX code, no images.
- * You can easily exchange this class against another card face creator that creates the faces from images if you wish.
- */
-public class CardFaceCreator {
+public class CardFaceCreator
+{
   public static double CARD_ARC = 22;
   public static double CARD_GRID_SYMBOL_SIZE = 30;
   public static double CARD_CENTER_SYMBOL_SIZE = 46;
@@ -30,17 +25,8 @@ public class CardFaceCreator {
   public static double CARD_WIDTH = 120;
   public static double CARD_HEIGHT = 180;
 
-  /**
-   * Create the front face of the card.
-   * @param suit
-   * @param rank
-   * @param width
-   * @param height
-   * @return
-   */
   public static Node createFrontFace(Suit suit, Rank rank)
   {
-
     CardFace face = new CardFace();
 
     Shape shape = createShape(CARD_WIDTH, CARD_HEIGHT);
@@ -54,25 +40,18 @@ public class CardFaceCreator {
     return face; 
   }
 
-  // Back of Card PNG calling.
+  // Back of Card: calling PNG
   public static Node createBackFace()
   {
-    Image cardImage = new Image("card_back4.png");
+    Image cardImage = new Image("Resources/card_back4.png");
     ImageView cardView = new ImageView(cardImage);
     cardView.setFitWidth(CARD_WIDTH);
     cardView.setFitHeight(CARD_HEIGHT);
-//    cardView.setPreserveRatio(true);
     return cardView;
   }
   
-  /**
-   * The card's shape, e. g. a rectangle with rounded corners
-   * @param width
-   * @param height
-   * @return
-   */
-  public static Rectangle createShape( double width, double height) {
-
+  public static Rectangle createShape( double width, double height)
+  {
     Rectangle shape = new Rectangle();
     shape.setWidth( width);
     shape.setHeight( height);
@@ -80,21 +59,11 @@ public class CardFaceCreator {
     shape.setArcHeight(CARD_ARC);
     shape.setStroke( Color.BLACK);
     shape.setFill( Color.TRANSPARENT);
-
     return shape;
   }
 
-
-  /**
-   * Create top/left and bottom/right corner text / symbols
-   * @param face
-   * @param suit
-   * @param rank
-   * @param width
-   * @param height
-   */
-  private static void addCornerText( CardFace face, Suit suit, Rank rank, double width, double height) {
-
+  private static void addCornerText( CardFace face, Suit suit, Rank rank, double width, double height)
+  {
     Text rankText;
     Text suitText;
 
@@ -103,7 +72,6 @@ public class CardFaceCreator {
     double offsetY = 0;
 
     // top left
-    // -----------------
     rankText = createText(rank.getShortName(), suit, CARD_CORNER_SYMBOL_SIZE);
     rankText.setRotate(0);
     rankText.relocate(6, rankOffsetY);
@@ -115,7 +83,6 @@ public class CardFaceCreator {
     face.getChildren().addAll( rankText,suitText);
 
     // bottom right
-    // -----------------
     rankText = createText(rank.getShortName(), suit, CARD_CORNER_SYMBOL_SIZE);
     rankText.setRotate(180);
     rankText.relocate( width - rankText.getBoundsInParent().getWidth() - 6, height - rankText.getBoundsInParent().getHeight() - rankOffsetY);
@@ -125,18 +92,10 @@ public class CardFaceCreator {
     suitText.relocate( rankText.getBoundsInParent().getMaxX() - (rankText.getBoundsInParent().getWidth() + suitText.getBoundsInParent().getWidth()) / 2.0, rankText.getBoundsInParent().getMinY() - suitText.getBoundsInParent().getHeight() - offsetY);
 
     face.getChildren().addAll( rankText,suitText);
-
   }
 
-  /**
-   * Combines commonly used methods to create common text / symbols for the card.
-   * @param name
-   * @param suit
-   * @param fontSize
-   * @return
-   */
-  private static Text createText( String name, Suit suit, double fontSize) {
-
+  private static Text createText( String name, Suit suit, double fontSize)
+  {
      Text text = new Text( name);
 
      text.setTextOrigin( VPos.TOP);
@@ -146,40 +105,22 @@ public class CardFaceCreator {
      return text;
   }
 
-  /**
-   * Centers the text vertically, visually correct.
-   * If we wouldn't apply the VISUAL bounds type, then there would be an empty gap which would eg be reserved for letters like À.
-   * You can verify it by applying grid lines, eg:
-   * 
-        double y = 0;
-      while( y < height) {
-        y +=20;
-        Line line = new Line( 0,y,width,y);
-        face.getChildren().addAll( line);
-      }
-   * @param name
-   * @param suit
-   * @param fontSize
-   * @return
-   */
-  private static Text createTextCentered( String name, Suit suit, double fontSize) {
-
+  // Centers the text vertically
+  private static Text createTextCentered( String name, Suit suit, double fontSize)
+  {
      Text text = new Text( name);
-
      text.setBoundsType(TextBoundsType.VISUAL);
      text.setFill( suit.getColor());
      text.setFont( Font.font( null, fontSize));
-
      return text;
   }
 
-  private static void addCenterItems( CardFace face, Suit suit, Rank rank, double width, double height) {
-
+  private static void addCenterItems( CardFace face, Suit suit, Rank rank, double width, double height)
+  {
     Text rankTextCenter;
-
-    if( rank == Rank.ACE) {
-
-      // create text / symbol
+    if( rank == Rank.ACE)
+    {
+      // create text and symbol
       rankTextCenter = createTextCentered(suit.getSymbol(), suit, CARD_CENTER_SYMBOL_SIZE);
 
       // center within card
@@ -189,9 +130,9 @@ public class CardFaceCreator {
       face.getChildren().addAll( rankTextCenter);
 
     }
-    else if( rank == Rank.JACK || rank == Rank.QUEEN || rank == Rank.KING) {
-
-      // create text / symbol
+    else if ( rank == Rank.JACK || rank == Rank.QUEEN || rank == Rank.KING)
+    {
+      // create text and symbol
       rankTextCenter = createTextCentered(rank.getShortName(), suit, CARD_CENTER_SYMBOL_SIZE);
 
       // center within card
@@ -199,20 +140,18 @@ public class CardFaceCreator {
 
       // add to card
       face.getChildren().addAll( rankTextCenter);
-
     }		
-    else {
-
+    else
+    {
       GridPane gridPane = new GridPane();
-
       gridPane.setGridLinesVisible(false);
-
       gridPane.setHgap(0);
       gridPane.setVgap(0);
       gridPane.setPrefSize( width, height);
       gridPane.setPadding(new Insets(17));
 
-      switch( rank) {
+      switch( rank)
+      {
       case TWO:
           gridPane.add( createGridSymbol( suit), 0, 0);
           gridPane.add( createGridSymbol( suit, true), 0, 1);
@@ -288,11 +227,8 @@ public class CardFaceCreator {
       default:
         break;
       }
-
-
       // add to card
       face.getChildren().addAll( gridPane);
-
     }
   }
 
@@ -303,7 +239,6 @@ public class CardFaceCreator {
 
   private static Text createGridSymbol(Suit suit, boolean rotate)
   {
-
     Text text = new Text(suit.getSymbol());
 
     text.setTextOrigin(VPos.CENTER);
@@ -311,9 +246,7 @@ public class CardFaceCreator {
     text.setFont(Font.font(null, CARD_GRID_SYMBOL_SIZE));
 
     if (rotate)
-    {
       text.setRotate(180);
-    }
 
     GridPane.setHalignment(text, HPos.CENTER);
     GridPane.setHgrow(text, Priority.ALWAYS);

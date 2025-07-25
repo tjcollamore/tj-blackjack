@@ -36,7 +36,7 @@ public class ChoiceDialog
         for (int i = 0; i < options.length; i++) {
             String label = options[i];
             Button btn = new Button(label);
-            String baseColor = (i == 0) ? "#007bff" : "#6c757d";  // First button = primary
+            String baseColor = (i == 0) ? "#007bff" : "#6c757d";  
             String focusColor = (i == 0) ? "#339af0" : "#868e96";
             applyButtonStyles(btn, baseColor, focusColor);
 
@@ -73,7 +73,7 @@ public class ChoiceDialog
             javafx.application.Platform.runLater(() -> {
                 double offsetX = 0;
                 dialogStage.setX(ownerStage.getX() + ownerStage.getWidth() / 2 - dialogStage.getWidth() / 2 + offsetX);
-                double offsetY = -90;
+                double offsetY = 0;
                 dialogStage.setY(ownerStage.getY() + ownerStage.getHeight() / 2 - dialogStage.getHeight() / 2 + offsetY);
             });
         });
