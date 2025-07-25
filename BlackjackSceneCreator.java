@@ -89,7 +89,7 @@ public class BlackjackSceneCreator
         "-fx-border-width: 2px;" +
         "-fx-border-radius: 10px;"
     );
-    bankrollLabel.setPrefWidth(120);
+    bankrollLabel.setPrefWidth(160);
     bankrollLabel.setAlignment(Pos.CENTER);
   }
   

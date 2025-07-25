@@ -29,10 +29,10 @@ public class Main extends Application
     primaryStage.setScene(scene);
     primaryStage.show();
     
-    startGame(primaryStage, sceneCreator.getDealerCards(),  sceneCreator.getPlayerCards());
+    startGame(primaryStage, sceneCreator.getDealerCards(),  sceneCreator.getPlayerCards(), sceneCreator.getBankrollLabel());
   }
 
-  private void startGame(Stage stage, List<Node> dealerCardNodes, List<Node> playerCardNodes)
+  private void startGame(Stage stage, List<Node> dealerCardNodes, List<Node> playerCardNodes, Label bankrollLabel)
   {
     IOutputter outputter = new ConsoleOutputter();
     ShoeMgr shoeMgr = new ShoeMgr(outputter, GameOptions.DECKS_IN_SHOE);
@@ -45,25 +45,30 @@ public class Main extends Application
     do
     {
       outputter.output("Player bankroll: " + Wager.getFormattedCurrency(playerBankroll));
+      bankrollLabel.setText(Wager.getFormattedCurrency(playerBankroll));
+      
       dealerCardNodes.clear();
       playerCardNodes.clear();
 
       if (playerBankroll < GameOptions.MIN_BET)
       {
         outputter.output("You do not have enough funds. Withdrawing another $" + GameOptions.STARTING_BANKROLL  + " from the ATM.");
+        ChoiceDialog.show(stage, "You do not have enough funds.\nWithdrawing another $" + GameOptions.STARTING_BANKROLL  + " from the ATM.", "OK");
         playerBankroll += GameOptions.STARTING_BANKROLL;
-        outputter.output("Player bankroll: " + Wager.getFormattedCurrency(playerBankroll));
+        outputter.output("Player bankroll: " + Wager.getFormattedCurrency(playerBankroll));              bankrollLabel.setText(Wager.getFormattedCurrency(playerBankroll));
       }
 
       int maxBet = Math.min((int)playerBankroll, GameOptions.MAX_BET);
       wager.setBetAmount(BetDialog.show(stage, GameOptions.MIN_BET, maxBet));
       outputter.output("Player bet: $" + wager.getBetAmount());
       playerBankroll -= wager.getBetAmount();
+      bankrollLabel.setText(Wager.getFormattedCurrency(playerBankroll));
   
       Round round = new Round(outputter, shoeMgr, playerHandStrategy, dealerCardNodes, playerCardNodes, wager);
     
       resultMessage = round.play();
       playerBankroll += wager.getPayout();
+      bankrollLabel.setText(Wager.getFormattedCurrency(playerBankroll));
       outputter.output("Player bankroll: " + Wager.getFormattedCurrency(playerBankroll));
       outputter.output("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
       shoeMgr.checkCutCard();

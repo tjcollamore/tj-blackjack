@@ -11,7 +11,9 @@ public class PlayerInteractiveHandStrategy implements HandStrategy
   
   public void play(Hand hand, ShoeMgr shoeMgr)
   { 
-    while (!hand.isBusted() && !hand.is21() && ChoiceDialog.show(stage, "Do you want to stand or hit?", "Stand", "Hit").equals("Hit"))
+    while (!hand.isBusted() && 
+           !hand.is21() && 
+           ChoiceDialog.show(stage, "What do you want to do?", "Stand", "Hit").equals("Hit"))
     {
       Card card = shoeMgr.drawCard();
       hand.addCard(card);

@@ -473,6 +473,11 @@ TODO: improve program/add to directions: printing payout/money with correct cool
 TODO: bankroll = double
 
 TODO: cleanup step 66 and 67. (Prevent betting if < MIN. Cap Max at Payroll, unless Payroll > MAX)
+
+TODO: add directions: to make textbox (given from ai) that shows payroll/player money to show more than a few digits. so when we get $1000+ its not just showing "..."
+
+TODO: add directions: use previous ChoiceDialog syntax to make a new pop-up to tell player they have no money and its withdrawing from ATM. show only 1 button: "OK".
+
 66. Add a starting bankroll. Add a GameOption called STARTING_BANKROLL for it. Default to 400. Update logic accordingly (in main()). That is, deduct the bet amount from the bank roll as soon as the BetAmount has been set. Add the payout to the bank roll as soon as the round completes. Display the bank roll in the Scene.
 
 TODO: add to directions: initialize betAmount with previous betAmount
@@ -480,7 +485,7 @@ TODO: add to directions: initialize betAmount with previous betAmount
 TODO: add to directions:
 Get rid of cancel button when player tries to bet money. It would crash when you click it anyways
 
-TODO: add to directions:
+TODO: add directions:
 When getting blackjack, and your bankroll has non-multiple of 5 (like $422.50), selecting highest/max money would allow user to select 422 as max bet. Then clicking down arrow would make bet go down by 5's from 422 (like 417,412) -all trash. Fix this by making max bet a multiple of 5 in BetDiaglog
 
 67. If bankroll becomes 0, end the game (or give the user the choice to go to the ATM).
