@@ -3,6 +3,7 @@
         pkgs.unzip
         pkgs.graalvm17-ce
         pkgs.maven
+        pkgs.junit
         pkgs.replitPackages.jdt-language-server
         pkgs.replitPackages.java-debug
         pkgs.xorg.libX11
