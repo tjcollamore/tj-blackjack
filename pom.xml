@@ -35,7 +35,6 @@
     </dependencies>
 
     <build>
-        <sourceDirectory>.</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -44,9 +43,6 @@
                 <configuration>
                     <source>17</source>
                     <target>17</target>
-                    <excludes>
-                        <exclude>**/src/test/**</exclude>
-                    </excludes>
                 </configuration>
             </plugin>
             
