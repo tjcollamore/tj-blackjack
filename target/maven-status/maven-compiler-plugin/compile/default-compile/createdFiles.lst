@@ -26,6 +26,7 @@ BetDialog.class
 SplitBadgeContainer.class
 Shoe.class
 SubroundBadge.class
+VNCTest.class
 Hand.class
 ShoeMgr.class
 DealerHandStrategy.class
