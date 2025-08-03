@@ -92,3 +92,16 @@ args = "mvn clean compile"
 task = "shell.exec"
 args = "java -cp \"target/classes:javafx-sdk-18.0.2/lib/*\" --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls,javafx.fxml VNCTest"
 
+[[workflows.workflow]]
+name = "Test AWT"
+author = 32876875
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mvn clean compile"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "java -cp \"target/classes\" AWTTest"
+
