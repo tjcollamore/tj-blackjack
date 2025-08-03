@@ -33,4 +33,5 @@ DealerHandStrategy.class
 DemoApp.class
 JavaFXLauncher.class
 Card.class
+AWTTest.class
 TextAreaOutputter.class
