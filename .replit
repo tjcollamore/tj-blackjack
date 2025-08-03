@@ -48,7 +48,7 @@ classPaths = ["."]
 mainClass = "Main"
 
 [workflows]
-runButton = "Run JavaFX App"
+runButton = "Run Tests"
 
 [[workflows.workflow]]
 name = "Run Tests"
@@ -65,8 +65,6 @@ args = "mvn test-compile"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "mvn test"
-
-
 
 [[workflows.workflow]]
 name = "Run JavaFX App"
