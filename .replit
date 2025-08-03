@@ -48,6 +48,7 @@ classPaths = ["."]
 mainClass = "Main"
 
 [workflows]
+runButton = "Run JavaFX App"
 
 [[workflows.workflow]]
 name = "Run Tests"
@@ -59,9 +60,22 @@ args = "find . -name \"*.class\" -delete"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "javac --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls -cp .:/run_dir/junit-4.12.jar *.java"
+args = "mvn test-compile"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = '''java --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls -cp .:/run_dir/junit-4.12.jar org.junit.runner.JUnitCore $(find . -name "*Test.class" | sed 's|./||g' | sed 's|\.class||g' | tr '\n' ' ')'''
+args = "mvn test"
+
+[[workflows.workflow]]
+name = "Run JavaFX App"
+author = 32876875
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mvn clean compile"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mvn exec:java -Dexec.mainClass=\"Main\""
 
