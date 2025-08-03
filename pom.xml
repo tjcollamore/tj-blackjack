@@ -60,7 +60,14 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>Main</mainClass>
-                    <commandlineArgs>-Djava.awt.headless=false -Dprism.order=sw</commandlineArgs>
+                    <args>
+                        <arg>-Djava.awt.headless=false</arg>
+                        <arg>-Dprism.order=sw</arg>
+                        <arg>-Dprism.verbose=true</arg>
+                        <arg>-Dglass.platform=gtk</arg>
+                        <arg>-Dmonocle.platform=Headless</arg>
+                        <arg>-DDISPLAY=:0</arg>
+                    </args>
                     <environmentVariables>
                         <DISPLAY>:0</DISPLAY>
                     </environmentVariables>
