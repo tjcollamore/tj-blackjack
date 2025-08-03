@@ -47,3 +47,21 @@ type = "request"
 classPaths = ["."]
 mainClass = "Main"
 
+[workflows]
+
+[[workflows.workflow]]
+name = "Run Tests"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "find . -name \"*.class\" -delete"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "javac --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls -cp .:/run_dir/junit-4.12.jar *.java"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = '''java --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls -cp .:/run_dir/junit-4.12.jar org.junit.runner.JUnitCore $(find . -name "*Test.class" | sed 's|./||g' | sed 's|\.class||g' | tr '\n' ' ')'''
+

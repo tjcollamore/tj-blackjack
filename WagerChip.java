@@ -1,3 +1,8 @@
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Arrays;
+
 public enum WagerChip
 {
   ORANGE(1000, "orange", "Resources/chip_orange.png"),
@@ -6,7 +11,7 @@ public enum WagerChip
   GREEN(25, "green", "Resources/chip_green.png"),
   RED(5, "red", "Resources/chip_red.png"),
   PINK(2.5, "pink", "Resources/chip_pink.png"),
-  WHITE(1, "white", "Resources/chip_white.png")
+  WHITE(1, "white", "Resources/chip_white.png");
 
   private double value;
   private String color;

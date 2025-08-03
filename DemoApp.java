@@ -40,7 +40,7 @@ public class DemoApp extends Application {
             container.hide();
         });
 
-        container.show(badges, okBadge);
+//        container.show(badges, okBadge);
         container.highlight(0);
 
         root.getChildren().addAll(mainDisplay, container);

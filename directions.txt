@@ -121,7 +121,7 @@ public Deck()
   }
 }
 
-38. Optional: The way we designed the Suit class is a normal technique for languages such as C++ or C#. But Java's enum power renders it unnecessary. Refactor Suit class to be an enum.
+38. The way we designed the Suit class is a normal technique for languages such as C++ or C#. But Java's enum power renders it unnecessary. Refactor Suit class to be an enum.
 
 39. Let's create the interactive Player Strategy. We'll use inheritance. Create a new file containing an interface called HandStrategy ("public interface HandStrategy" containing 1 method: "public void play(Hand hand, ShoeMgr shoeMgr);". Interfaces lack implementations. Modify DealerHandStrategy to derive from HandStrategy ("public class DealerHandStrategy implements HandStrategy"). Use inheritance when the derived class "is-a" the base class. Now create a new class called PlayerInteractiveStrategy that also implements HandStrategy. For the moment, the play() implementation can be identical to that of DealerHandStrategy (we'll fix it later). Eventually, we'll also have a PlayerBasicStrategy (which always plays by the "book"). This will be a GameOption later; therefore, pass the player's strategy from main() into Round's play() method. The Round class does not need to know which player strategy is used; therefore, play()'s signature should be "public void play(HandStrategy playerStrategy)" rather than "public void play(PlayerBasicStrategy playerStrategy)". This is the power of polymorphism!!
 
@@ -210,7 +210,32 @@ public interface IOutputter
 
 43. Now update everything that wrote to the console to write to the IOutputter instead. You'll need to pass the instantiated IOutputter in Main down through classes such as Hand, Round, and ShoeMgr. Include IOutputter outputter in the field/private variable. Make sure to include IOutputter outputter in first slot of the signature for the constructors everywhere with text output, and connect the variable to the field using this.outputter = outputter;. This means we can change all System.out.println("blah"); with something like outputter.output("blah");
 
-44. <<TODO: decide if this is a good time to introduce unit testing, mocks, and pros/cons of passing around the outputter...>>  The previous step is a purer design and offers better encapsulation. However, for relatively simple things, it's common practice to forego purity for simplicity (with minimally compromised testability).
+TODO
+44. Let's introduce Unit Testing. First, let's add a workflow to Replit to make it easy to run all unit tests.
+44a. Click the vertical ... next to Files in the upper-left corner and choose Show Hidden Files.
+44b. Scroll down and find the .replit file. At the bottom, add this text:
+
+[workflows]
+
+[[workflows.workflow]]
+name = "Run Tests"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "find . -name \"*.class\" -delete"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "javac --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls -cp .:/run_dir/junit-4.12.jar *.java"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = '''java --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls -cp .:/run_dir/junit-4.12.jar org.junit.runner.JUnitCore $(find . -name "*Test.class" | sed 's|./||g' | sed 's|\.class||g' | tr '\n' ' ')'''
+
+44c. Now, the Run menu has a down arrow with a Run Tests option. This will run all Unit Tests, but we don't have any yet.
+
+44. <<TODO: decide if this is a good time to introduce mocks, and pros/cons of passing around the outputter...>>  The previous step is a purer design and offers better encapsulation. However, for relatively simple things, it's common practice to forego purity for simplicity (with minimally compromised testability).
 
 44. Using AI, extend the Yes/No dialog to support a dynamic number of buttons with labels. (Call it ChoiceDialog and rename the java file to match.) The goal is to be able to show not only Hit and Stand buttons, but later add the ability to Surrender, Double, or Split. The show() signature should now be "public static String show(Stage ownerStage, String message, String... options)" The "..." at the end means that the compiler will accept any number of String parameters at the end (and the parameters will go into an array). For now, just change "Yes" and "No" to "Deal" and "Exit".
 

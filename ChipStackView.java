@@ -6,13 +6,15 @@ import javafx.scene.layout.VBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.text.Font;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ChipStackView extends VBox 
 {
 
     public ChipStackView(List<WagerChip> chips)
     {
-        HBox stackRow = new HBox();
+/*        HBox stackRow = new HBox();
         double spacing = 8.0;
 
         for (WagerChip chip : chips)
@@ -38,5 +40,5 @@ public class ChipStackView extends VBox
 
         this.getChildren().addAll(stackRow, totalLabel);
         this.setSpacing(5);
-    }
+*/    }
 }
