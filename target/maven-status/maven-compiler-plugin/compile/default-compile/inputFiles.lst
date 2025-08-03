@@ -1,8 +1,8 @@
 /home/runner/workspace/src/main/java/Card.java
-/home/runner/workspace/src/main/java/GameOptions.java
 /home/runner/workspace/src/main/java/Hand.java
-/home/runner/workspace/src/main/java/CardFaceCreator.java
+/home/runner/workspace/src/main/java/GameOptions.java
 /home/runner/workspace/src/main/java/PlayerInteractiveHandStrategy.java
+/home/runner/workspace/src/main/java/CardFaceCreator.java
 /home/runner/workspace/src/main/java/Wager.java
 /home/runner/workspace/src/main/java/Rank.java
 /home/runner/workspace/src/main/java/IOutputter.java

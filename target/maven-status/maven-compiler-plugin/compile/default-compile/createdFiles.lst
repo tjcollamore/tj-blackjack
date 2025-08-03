@@ -1,6 +1,6 @@
 GameOptions.class
-CardFaceCreator.class
 HandStrategy.class
+CardFaceCreator.class
 BlackjackSceneCreator.class
 ChoiceResult.class
 BetDialog$Delta.class
