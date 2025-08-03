@@ -30,5 +30,6 @@ Hand.class
 ShoeMgr.class
 DealerHandStrategy.class
 DemoApp.class
+JavaFXLauncher.class
 Card.class
 TextAreaOutputter.class
