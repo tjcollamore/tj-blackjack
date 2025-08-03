@@ -51,8 +51,7 @@ public enum WagerChip {
         {
             if (chip.getCentValue() < cents)
             {
-                if (chip instanceof WagerChip.PINK && cents % 100 == 0) 
-//                if (chip.getCentValue() == PINK.getCentValue() && cents % 100 == 0)
+                if (chip == PINK && cents % 100 == 0)
                     continue;
                 
                 int count = cents / chip.getCentValue();
