@@ -43,7 +43,7 @@ public class CardFaceCreator
   // Back of Card: calling PNG
   public static Node createBackFace()
   {
-    Image cardImage = new Image("Resources/card_back4.png");
+    Image cardImage = new Image("/card_back4.png");
     ImageView cardView = new ImageView(cardImage);
     cardView.setFitWidth(CARD_WIDTH);
     cardView.setFitHeight(CARD_HEIGHT);
