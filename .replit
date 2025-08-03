@@ -48,7 +48,6 @@ classPaths = ["."]
 mainClass = "Main"
 
 [workflows]
-runButton = "Run JavaFX App"
 
 [[workflows.workflow]]
 name = "Run Tests"
