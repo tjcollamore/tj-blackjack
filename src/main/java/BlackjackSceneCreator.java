@@ -23,7 +23,7 @@ public class BlackjackSceneCreator
   {
     BorderPane root = new BorderPane();
     root.setStyle(
-        "-fx-background-image: url('Resources/felt_green.png');" +
+        "-fx-background-image: url('/felt_green.png');" +
         "-fx-background-repeat: repeat;" +
         "-fx-background-size: auto;" +
         "-fx-background-position: center;");

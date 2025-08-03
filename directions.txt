@@ -867,7 +867,93 @@ TODO: SplitMgr? Round class is 80 percent split related.
 
 63a. Add an event to receive notification as the bet amount changes. In the event handler, update a Label with the new Bet Amount. (For now, it will be redundant with the text in the Spinner.)
 
-63b. Display chips in that dialog matching the wager choice. Have AI create chips in $1, $2.50 (pink), $5 (red), $25 (green), $100(black), $500(purple), and $1000(orange). Have an algorithm, called a greedy algorithm, determine the chips to show. (Repeatedly use the highest denomination as long as it's below the requested amounted, then move to the next denomination. Use either a for-loop or recursion)
+100. Display chips in BetDialog matching the wager choice. Have AI create PNG files of chips in $1 (white), $2.50 (pink), $5 (red), $25 (green), $100(black), $500(purple), and $1000(orange). Place the png files in the /resources folder.
+
+101. Create a WagerChip enum.
+101a. Have a private final int centValue and private final Strings for color and imagePath. Have the constructor set these 3 values.
+101b. Add accessors for each, plus one that called getValue() that returns a double "return value / 100.0"; 
+101c. Set the order max to min: ORANGE, PURPLE, BLACK, GREEN, RED, WHITE. (Exclude Pink for now. Well, add it since we're here, but comment out the line.)
+
+102 Create the algorithm to convert amount to chips.
+102a. Add a static method called getChipsByValue. double amount is an input parameter and it returns a "Map<WagerChip>, Integer". The first line of the method is: "Map<WagerChip, Integer> result = new LinkedHashMap<>();" and the last is "return result;"
+102b. Add these imports:
+import java.util.Map;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+102c. The 2nd line of the method is to convert the double amount into int cents. ("int cents = (int) (amount * 100);") This will be our running remainder to process, ie., to convert to chips.
+102d. We're going to take an algorithm where, given an amount, we'll return how many of each chip we'll need to be equal to that amount. We'll use what's called a greedy algorithm. Repeatedly use the highest denomination as long as it's below the requested amounted, then move to the next denomination. Use either a for-loop or recursion. Recall that all enums have a built-in method called "values()" that returns an array of each enum, ie each WagerChip. So we can use this syntax: "for (WagerChip chip : values()) { /*magic*/ }"
+102e. We could use a nested for-loop to repeatedly add 1 chip at a time; however, it's more efficient to do it all at once. if (chip.getCentValue() < cents), then we know there's at least one of those chips in the final map. To determine how many, simply "int count = cents / chip.getCentValue()". Then deduct from our running amount. "cents -= count * chip.getCentValue();" Finally, store the number in the map: "result.put(chip, count);"
+
+103. Let's make Unit Tests to test our algorithm.
+103a. Create a file called /test/java/WagerChipTest.java.
+103b. Create a public class WagerChipTest.
+103c. Add these imports:
+import org.junit.jupiter.api.Test;
+import java.util.Map;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+103d. Add this method:
+@Test
+public void testWhiteChip()
+{
+    assertEquals(100, WagerChip.WHITE.getCentValue());
+}
+The "@Test" is metadata describing the method. It's called an annotation. It is used by the unit test runtime framework to find the unit tests. The assertEquals takes an 'expected value' and an 'actual value', and asserts they are the same.
+103e. The previous test is not particularly interesting, except that it shows how tests work. Here is a more valuable unit test:
+@Test
+public void test200() {
+    assertEquals(
+        Map.of(WagerChip.WHITE, 2),
+        WagerChip.getChipsByValue(2.00)
+    );
+}
+This test asserts that passing 2.00 (dollars) into getChipsByValue returns a collection (a map) of enums, in this case a single entry, and there are 2 of them. Ie., our algorithm, if implemented correctly, should return 2 white chips.
+103f. Run Tests and confirm no failed tests.
+103g. You can delete "testWhiteChip" because it's so uninteresting. test200() on the other hand is quite valuable.
+
+
+104. Add the Pink chip to the mix. This is needed because our game support 6:5 payouts for Blackjack, so we need the 2.50 denomination.
+104a. Start by uncommenting the PINK chip line in WagerChip so that it's automatically included in the algorithm (via the "values()" call, and re-run the existing test successfully.
+104b. Add this test, which should also succeed:
+@Test
+public void test450() {
+    assertEquals(
+        Map.of(WagerChip.PINK, 1, WagerChip.WHITE, 2),
+        WagerChip.getChipsByValue(4.50)
+    );
+}
+
+104c. Now create a test400() as follows:
+@Test
+public void test400() {
+    assertEquals(
+        Map.of(WagerChip.WHITE, 4),
+        WagerChip.getChipsByValue(4.00)
+    );
+}
+104d. Do you expect it to succeed? It fails! ("expected: <{WHITE=4}> but was: <{PINK=1, WHITE=1}>"). Understand what happened. It fails because our algorithm greedily grabs a pink 250 chip because it's less than 400. But then there's no way to satisfy the remaining 150. 4 100s is the correct result.
+104e. This pattern, whereby you write the test first, confirms it fails, then update the code until it succeeds, is called Test Driven Development, or TDD.
+
+105. Let's fix the algorithm to support PINK chips correctly. Essentially, we only want to include the PINK chip if we have a 50 cents 'turd'. One way to implement the algorithm is to wait until it's "pink's turn" (ie, chip.getCentValue() == 250) and continue if (cents % 100 == 0) (i.e., the white chips are sufficient). A simpler variant is to recall instanceof. ("if (chip instanceof PINK && cents % 100 == 0) continue;")
+105a. "boolean includePink = (cents % 500) == 250;"
+
+103h. Add these tests, and any others you see fit:
+@Test
+public void test800() {
+    assertEquals(
+        Map.of(WagerChip.RED, 1, WagerChip.WHITE, 3),
+        WagerChip.getChipsByValue(8.00)
+    );
+}
+
+@Test
+public void test16500() {
+    assertEquals(
+        Map.of(WagerChip.BLACK, 1, WagerChip.GREEN, 2, WagerChip.RED, 3),
+        WagerChip.getChipsByValue(165.00)
+    );
+}
+
+
 
 64. Add a white betting circle:
 Circle betCircle = new Circle(40, Color.TRANSPARENT);

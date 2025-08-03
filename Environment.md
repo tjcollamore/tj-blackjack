@@ -51,7 +51,7 @@ classPaths = ["."]
 mainClass = "Main"
 
 [workflows]
-runButton = "Run JavaFX App"
+runButton = "Run Tests"
 
 [[workflows.workflow]]
 name = "Run Tests"
@@ -71,16 +71,16 @@ args = "mvn test"
 
 [[workflows.workflow]]
 name = "Run JavaFX App"
-author = 32876875
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "find . -name \"*.class\" -delete && javac --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls Main.java && java --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls Main"
+args = "mvn clean compile exec:java"
 
 
 
 pom.xml:
+
 
 
 <?xml version="1.0" encoding="UTF-8"?>
@@ -101,9 +101,9 @@ pom.xml:
 
     <dependencies>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.9.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -119,7 +119,6 @@ pom.xml:
     </dependencies>
 
     <build>
-        <sourceDirectory>.</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -130,6 +129,7 @@ pom.xml:
                     <target>17</target>
                 </configuration>
             </plugin>
+            
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
@@ -137,6 +137,11 @@ pom.xml:
                 <configuration>
                     <mainClass>Main</mainClass>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M9</version>
             </plugin>
             <plugin>
                 <groupId>org.openjfx</groupId>
@@ -160,4 +165,3 @@ pom.xml:
         </plugins>
     </build>
 </project>
-

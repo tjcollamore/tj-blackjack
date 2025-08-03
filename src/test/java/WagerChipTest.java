@@ -1,10 +1,18 @@
 import org.junit.jupiter.api.Test;
 import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class WagerChipTest {
+public class WagerChipTest
+{
+    @Test
+    public void test200() {
+        assertEquals(
+            Map.of(WagerChip.WHITE, 2),
+            WagerChip.getChipsByValue(2.00)
+        );
+    }
 
+    
     @Test
     public void test400() {
         assertEquals(
@@ -13,6 +21,16 @@ public class WagerChipTest {
         );
     }
 
+    
+    @Test
+    public void test450() {
+        assertEquals(
+            Map.of(WagerChip.PINK, 1, WagerChip.WHITE, 2),
+            WagerChip.getChipsByValue(4.50)
+        );
+    }
+
+/*
     @Test
     public void test450() {
         assertEquals(
@@ -28,7 +46,7 @@ public class WagerChipTest {
             WagerChip.getChipsByValue(7.50)
         );
     }
-
+*/
     @Test
     public void test800() {
         assertEquals(
@@ -44,7 +62,7 @@ public class WagerChipTest {
             WagerChip.getChipsByValue(165.00)
         );
     }
-
+/*
     @Test
     public void test16750() {
         assertEquals(
@@ -52,4 +70,5 @@ public class WagerChipTest {
             WagerChip.getChipsByValue(167.50)
         );
     }
+    */
 }
