@@ -18,7 +18,7 @@ public class RoundResultAnalyzer
       result = "Dealer Blackjack! You lost!";
       wager.lose();
     }
-    else if (wager.didSurrender)
+    else if (wager.didSurrender())
     {
       result = "You surrendered!";
     }
@@ -47,6 +47,7 @@ public class RoundResultAnalyzer
       result = "It's a tie!";
       wager.push();
     }
+    result += "\nYour payout is: " + wager.getFormattedPayout();
     outputter.output(result);
     return result;
   }

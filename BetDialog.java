@@ -11,23 +11,20 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 public class BetDialog
-{
-    private static int previousBet = GameOptions.MIN_BET;
-    
-    public static int show(Stage ownerStage, int minBet, int maxBet)
+{   
+    public static int show(Stage ownerStage, int initialBet, int minBet, int maxBet)
     {
         // Round down to nearest 5
         maxBet -= maxBet % 5;
 
         // Cap the default selection to the max bet
-        if (previousBet > maxBet)
-            previousBet = maxBet;
+        if (initialBet > maxBet)
+            initialBet = maxBet;
 
-        
         //should not happen,
         //unless min bet allowed to change
-        if (previousBet < minBet)
-            previousBet = minBet;
+        if (initialBet < minBet)
+            initialBet = minBet;
         
         final Integer[] result = {null};
 
@@ -43,7 +40,7 @@ public class BetDialog
         Text prompt = new Text("Select your wager:");
         prompt.setStyle("-fx-font-size: 16px; -fx-fill: #333;");
 
-        Spinner<Integer> spinner = new Spinner<>(minBet, maxBet, previousBet, 5);
+        Spinner<Integer> spinner = new Spinner<>(minBet, maxBet, initialBet, 5);
         spinner.setEditable(false);
         spinner.setPrefWidth(150);
 
@@ -55,7 +52,7 @@ public class BetDialog
         HBox buttons = new HBox(10);
         buttons.setAlignment(Pos.CENTER);
 
-        Button submit = new Button("Submit");
+        Button submit = new Button("Let's go!");
 //        Button cancel = new Button("Cancel");
 
         applyButtonStyles(submit, "#007bff", "#339af0");
@@ -63,7 +60,7 @@ public class BetDialog
 
         submit.setOnAction(e -> {
             result[0] = spinner.getValue();
-            previousBet = spinner.getValue();
+           // previousBet = spinner.getValue();
             ((Stage) content.getScene().getWindow()).close();
         });
 /*

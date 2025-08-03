@@ -9,38 +9,74 @@ public class Hand
   private List<Node> cardNodes;
   private boolean isDealer;
   private boolean shouldShowScore;
+  private boolean isDisplayed;
+  private boolean isSplittingBlocked = false;
+  private boolean isSoft = false;
 
-  public Hand(IOutputter outputter, ShoeMgr shoeMgr, boolean isDealer, List<Node> cardNodes)
+  public Hand(IOutputter outputter, ShoeMgr shoeMgr, boolean isDealer, List<Node> cardNodes, boolean isDisplayed)
   {
     this.outputter = outputter;
     this.isDealer = isDealer;
     this.cardNodes = cardNodes;
     this.shouldShowScore = !isDealer;
-    
+    this.isDisplayed = isDisplayed;
+
     Card card = shoeMgr.drawCard();
     addCard(card);
-    
-    card = shoeMgr.drawCard();
-    addCard(card);
 
+   // card = shoeMgr.drawCard();
+  //  addCard(card);
+
+    //Testing: can always split
+    Card card2 = shoeMgr.drawCard();
+    while (card.getRank() != card2.getRank())
+    {
+      card2 = shoeMgr.drawCard();
+    }
+    addCard(card2);
+    
+    
     outputter.output("");
   }
 
-  public void showDealerDownCard()
+  public void showDealerHoleCard()
   {
     outputter.output("Dealer down card: " + cards.get(1));
     
     cardNodes.set(1, CardFaceCreator.createFrontFace(cards.get(1).getSuit(), cards.get(1).getRank()));
 
-    shouldShowScore = true;
-
-    showScoreBadge();
+    if (!shouldShowScore)
+    {
+      shouldShowScore = true;
+      showScoreBadge();
+    }
   }
 
   public void addCard(Card card)
   {
     cards.add(card);
 
+    if (card.isAce())
+      aceCount++;
+
+    if (isDisplayed)
+      displayCard(card);
+  }
+
+  // This variant used when splitting
+  public void addCardToFront(Card card)
+  {
+    cards.add(0, card);
+
+    if (card.isAce())
+      aceCount++;
+
+    if (isDisplayed)
+      displayCard(card);
+  }
+
+  private void displayCard(Card card)
+  {
     // Removes the score badge if it exists (It will be the last node)
     if (cardNodes.size() > 0 && cardNodes.get(cardNodes.size() - 1) instanceof ScoreBadge)
       cardNodes.remove(cardNodes.size() - 1);
@@ -52,22 +88,36 @@ public class Hand
     }
     else
     {
-      cardNodes.add(CardFaceCreator.createFrontFace(card.getSuit(), card.getRank()));
+cardNodes.add(CardFaceCreator.createFrontFace(card.getSuit(), card.getRank()));
       if (isDealer)
         outputter.output("Dealer drawn card: " + card);
       else
         outputter.output("Your drawn card: " + card);
     }
-  
-    if (card.isAce())
-      aceCount++;
-
     if (shouldShowScore)
-    {
-    showScoreBadge();
-    }
+      showScoreBadge();
   }
 
+  public void display()
+  {
+    if (isDisplayed)
+      return;
+    isDisplayed = true;
+    cardNodes.clear();
+    for (Card card : cards)
+      displayCard(card);
+  }
+
+  // Used when splitting
+  public Card removeCard(int slot)
+  {
+    if (cards.get(slot).isAce())
+      aceCount--;
+    if (isDisplayed)
+      cardNodes.remove(slot);
+    return cards.remove(slot);
+  }
+  
   private void showScoreBadge()
   {
     ScoreBadge playerBadge = new ScoreBadge();
@@ -89,7 +139,14 @@ public class Hand
       score -= 10;
       localAceCount--;
     }
+    isSoft = (localAceCount > 0);
     return score;
+  }
+
+  public boolean isSoft()
+  {
+    getScore();
+    return isSoft;
   }
 
   public boolean isBusted()
@@ -105,5 +162,18 @@ public class Hand
   public boolean is21()
   {
     return getScore() == 21;
+  }
+
+  public boolean isSplittable()
+  {
+    if (isSplittingBlocked)
+      return false;
+    
+    return cards.get(0).getRank() == cards.get(1).getRank();
+  }
+
+  public void blockSplitting()
+  {
+    isSplittingBlocked = true;
   }
 }

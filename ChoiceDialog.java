@@ -36,6 +36,7 @@ public class ChoiceDialog
         for (int i = 0; i < options.length; i++) {
             String label = options[i];
             Button btn = new Button(label);
+            btn.setPrefWidth(100);
             String baseColor = (i == 0) ? "#007bff" : "#6c757d";  
             String focusColor = (i == 0) ? "#339af0" : "#868e96";
             applyButtonStyles(btn, baseColor, focusColor);

@@ -1,10 +1,13 @@
 import javafx.animation.ScaleTransition;
 import javafx.animation.FillTransition;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.Effect;
@@ -15,24 +18,49 @@ public class ScoreBadge extends StackPane
 {
     private final Label label;
     private final Circle background;
+    private final Label softIndicator;
     
     public ScoreBadge()
     {
-        label = new Label("0");
-        label.setFont(Font.font("Arial", 14));
-        label.setTextFill(Color.WHITE);
-    
+        setPrefSize(30, 30);
+        setMaxSize(30, 30);
+        setMinSize(30, 30);
+
+        // Main circular background
         background = new Circle(15);
         background.setFill(Color.DARKGREEN);
         background.setStroke(Color.GOLD);
         background.setStrokeWidth(2);
-    
-        this.getChildren().addAll(background, label);
-        this.setPrefSize(30, 30);
+
+        // Score label
+        label = new Label("0");
+        label.setFont(Font.font("Arial", 14));
+        label.setTextFill(Color.WHITE);
+
+        // Star indicator for soft hand
+        softIndicator = new Label("✦");
+        softIndicator.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        softIndicator.setTextFill(Color.LIGHTYELLOW);
+        softIndicator.setVisible(false);
+        softIndicator.setMouseTransparent(true);
+
+        // Inner layout (confined to 30x30)
+        StackPane inner = new StackPane(background, label, softIndicator);
+        inner.setPrefSize(30, 30);
+        inner.setMaxSize(30, 30);
+        inner.setMinSize(30, 30);
+
+        StackPane.setAlignment(softIndicator, Pos.TOP_CENTER);
+        StackPane.setMargin(softIndicator, new Insets(-2, 0, 0, 0));
+
+        getChildren().add(inner);
     }
-    
+
+ 
     public void setScore(Hand hand, int score)
     {
+        if (hand.isSoft())
+            softIndicator.setVisible(true);
         if (hand.isBusted())
         {
             setText(String.valueOf(score), Color.DARKRED);

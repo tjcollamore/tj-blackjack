@@ -11,12 +11,25 @@ public class PlayerInteractiveHandStrategy implements HandStrategy
   
   public void play(Hand hand, Wager wager, ShoeMgr shoeMgr)
   { 
-    String choice = ChoiceDialog.show(stage, "What do you want to do?", "Stand", "Hit", "Double", "Surrender");
-
+    String choice;
+    if (wager.canDoubleOrSplit())
+    {
+      if (hand.isSplittable())
+        choice = ChoiceDialog.show(stage, "What do you want to do?", "Stand", "Hit", "Double", "Split", "Surrender");
+      else
+        choice = ChoiceDialog.show(stage, "What do you want to do?", "Stand", "Hit", "Double", "Surrender");
+    }
+    else
+      choice = ChoiceDialog.show(stage, "What do you want to do?", "Stand", "Hit", "Surrender");
 
     if (choice.equals("Surrender"))
     {
       wager.surrender();
+      return;
+    }
+    if (choice.equals("Split"))
+    {
+      wager.split();
       return;
     }
     if (choice.equals("Stand"))

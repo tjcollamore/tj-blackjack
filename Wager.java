@@ -1,6 +1,3 @@
-import java.text.NumberFormat;
-import java.util.Locale;
-import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
 public class Wager
@@ -8,59 +5,31 @@ public class Wager
   private int betAmount;
   private double payout;
   private boolean didDoubleDown = false;
-  private double bankroll;
-  private Label bankrollLabel;
+  private Bankroll bankroll;
   private IOutputter outputter;
-  public boolean didSurrender = false;
+  private boolean didSurrender = false;
+  private boolean didSplit = false;
 
-  public Wager(int betAmount, Label bankrollLabel, IOutputter outputter)
+  public Wager(Bankroll bankroll, int betAmount, IOutputter outputter)
   {
     this.betAmount = betAmount;
     this.payout = 0.0;
-    this.bankroll = 0.0;
-    this.bankrollLabel = bankrollLabel;
+    this.bankroll = bankroll;
     this.outputter = outputter;
   }
-
-  private void updateBankrollUi()
-  {
-    outputter.output("Player bankroll: " + getFormattedBankroll());
-    bankrollLabel.setText(getFormattedBankroll());
-  }
   
-  public void addToBankroll(double amount)
-  {
-    bankroll += amount;
-    updateBankrollUi();
-  }
-
-  public void addToBankrollIfBroke(Stage stage, double amount, int tableMinBet)
-  {
-    if (bankroll < tableMinBet)
-    {
-      outputter.output("You do not have enough funds. Withdrawing another $" + amount  + " from the ATM.");
-      ChoiceDialog.show(stage, "You do not have enough funds.\nWithdrawing another $" + amount + " from the ATM.", "OK");
-      addToBankroll(amount);
-    }
-  }
-
-  public void determineBetAmount(Stage stage, int tableMinBet, int tableMaxBet)
-  {
-    // Reset double down flag for new round
-    didDoubleDown = false;
-    didSurrender = false;
-    
-    int maxBet = Math.min((int)bankroll, tableMaxBet);
-    betAmount = BetDialog.show(stage, tableMinBet, maxBet);
-    bankroll -= getBetAmount();
-    updateBankrollUi();
+  public int determineBetAmount(Stage stage, int tableMinBet, int tableMaxBet)
+  { 
+    int maxBet = Math.min((int)bankroll.get(), tableMaxBet);
+    betAmount = BetDialog.show(stage, betAmount, tableMinBet, maxBet);
+    bankroll.deduct(betAmount);
+    return betAmount;
   }
   
   public void win()
   {
     payout = betAmount * 2;
-    bankroll += payout;
-    updateBankrollUi();
+    bankroll.deposit(payout);
   }
   public void lose()
   {
@@ -69,22 +38,19 @@ public class Wager
   public void push()
   {
     payout = betAmount;
-    bankroll += payout;
-    updateBankrollUi();
+    bankroll.deposit(payout);
   }
   
   public void blackjack()
   {
     payout = betAmount * GameOptions.BLACKJACK_PAYOUT;
-    bankroll += payout;
-    updateBankrollUi();
+    bankroll.deposit(payout);
   }
 
   public void surrender()
   {
     payout = betAmount * 0.5;
-    bankroll += payout;
-    updateBankrollUi();
+    bankroll.deposit(payout);
     didSurrender = true;
   }
 
@@ -93,12 +59,30 @@ public class Wager
     return didSurrender;
   }
 
+  public void split()
+  {
+    didSplit = true;
+    bankroll.deduct(betAmount);
+  }
+  
+  public boolean didSplit()
+  {
+    return didSplit;
+  }
+
+  public void reset()
+  {
+    didSplit = false;
+    didDoubleDown = false;
+    didSurrender = false;
+    payout = 0.0;
+  }
+
   public void doubleDown()
   {
-    bankroll -= betAmount;
+    bankroll.deduct(betAmount);
     betAmount *= 2;
     didDoubleDown = true;
-    updateBankrollUi();
   }
 
   public boolean didDoubleDown()
@@ -115,19 +99,14 @@ public class Wager
   {
     return payout;
   }
+  
   public String getFormattedPayout()
   {
-    return getFormattedCurrency(getPayout());
+    return bankroll.getFormattedCurrency(getPayout());
   }
 
-  public String getFormattedBankroll()
+  public boolean canDoubleOrSplit()
   {
-    return getFormattedCurrency(bankroll);
-  }
-
-  private static String getFormattedCurrency(double amount)
-  {
-    NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(Locale.US);
-    return currencyFormat.format(amount);
+    return bankroll.get() > getBetAmount();
   }
 }
