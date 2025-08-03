@@ -68,10 +68,8 @@ args = "mvn test"
 
 [[workflows.workflow]]
 name = "Run JavaFX App"
-author = 32876875
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "find . -name \"*.class\" -delete && javac --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls Main.java && java --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls Main"
-

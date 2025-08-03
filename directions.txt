@@ -215,7 +215,9 @@ TODO
 44a. Click the vertical ... next to Files in the upper-left corner and choose Show Hidden Files.
 44b. Scroll down and find the .replit file. At the bottom, add this text:
 
+
 [workflows]
+runButton = "Run JavaFX App"
 
 [[workflows.workflow]]
 name = "Run Tests"
@@ -227,13 +229,25 @@ args = "find . -name \"*.class\" -delete"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "javac --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls -cp .:/run_dir/junit-4.12.jar *.java"
+args = "mvn test-compile"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = '''java --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls -cp .:/run_dir/junit-4.12.jar org.junit.runner.JUnitCore $(find . -name "*Test.class" | sed 's|./||g' | sed 's|\.class||g' | tr '\n' ' ')'''
+args = "mvn test"
 
-44c. Now, the Run menu has a down arrow with a Run Tests option. This will run all Unit Tests, but we don't have any yet.
+[[workflows.workflow]]
+name = "Run JavaFX App"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "find . -name \"*.class\" -delete && javac --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls Main.java && java --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls Main"
+
+44c. Now, the Run menu has a down arrow with a Run Tests option. This will run all Unit Tests, but we don't have any yet. The console window, if working properly, should eventually say "No tests to run"
+
+44d. If the VNC window stops working, exist replit and reloading the application fixes it.
+
+44e. Use AI Assistant to switch to maven build environment. See the Environment.md file for known good settings.
 
 44. <<TODO: decide if this is a good time to introduce mocks, and pros/cons of passing around the outputter...>>  The previous step is a purer design and offers better encapsulation. However, for relatively simple things, it's common practice to forego purity for simplicity (with minimally compromised testability).
 
