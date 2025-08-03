@@ -1,5 +1,5 @@
 #compile = "javac --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls Main.java"
-run = "find . -name \"*.class\" -delete && javac --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls Main.java && java --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls Main"
+#run = "find . -name \"*.class\" -delete && javac --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls Main.java && java --module-path javafx-sdk-18.0.2/lib --add-modules javafx.controls Main"
 
 entrypoint = "Main.java"
 hidden = ["**/*.class", "javafx-sdk-18.0.2"]
