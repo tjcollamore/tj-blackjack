@@ -26,12 +26,9 @@ BetDialog.class
 SplitBadgeContainer.class
 Shoe.class
 SubroundBadge.class
-VNCTest.class
 Hand.class
 ShoeMgr.class
 DealerHandStrategy.class
 DemoApp.class
-JavaFXLauncher.class
 Card.class
-AWTTest.class
 TextAreaOutputter.class
