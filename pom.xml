@@ -60,6 +60,10 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>Main</mainClass>
+                    <commandlineArgs>-Djava.awt.headless=false -Dprism.order=sw</commandlineArgs>
+                    <environmentVariables>
+                        <DISPLAY>:0</DISPLAY>
+                    </environmentVariables>
                 </configuration>
             </plugin>
         </plugins>
