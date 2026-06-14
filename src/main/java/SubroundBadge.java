@@ -29,15 +29,22 @@ public class SubroundBadge extends StackPane {
         setVisible(false);
     }
 
-    public void update(int current, int total) {
-        label.setText(current + " of " + total);
-
-        if (total > 1 && !visibleState) {
+    public void update(int current, int total)
+    {
+        if (total > 1 && !visibleState) 
+        {
             visibleState = true;
             fadeAndSlideIn();
-        } else if (total <= 1 && visibleState) {
+        } 
+        else if (total <= 1 && visibleState) 
+        {
             visibleState = false;
             fadeAndSlideOut();
+        }
+
+        if (visibleState)
+        {
+            label.setText(current + " of " + total);
         }
     }
 

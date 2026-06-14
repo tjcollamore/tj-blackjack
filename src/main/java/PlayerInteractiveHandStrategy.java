@@ -15,21 +15,21 @@ public class PlayerInteractiveHandStrategy implements HandStrategy
     if (wager.canDoubleOrSplit())
     {
       if (hand.isSplittable())
-        choice = ChoiceDialog.show(stage, "What do you want to do?", "Stand", "Hit", "Double", "Split", "Surrender");
+        choice = ChoiceDialog.show(stage, "What do you want to do?", "Stand", "Hit", "Double", "Split", "⚑"); //🏳(U+1F3F3)
       else
-        choice = ChoiceDialog.show(stage, "What do you want to do?", "Stand", "Hit", "Double", "Surrender");
+        choice = ChoiceDialog.show(stage, "What do you want to do?", "Stand", "Hit", "Double", "⚑");
     }
     else
-      choice = ChoiceDialog.show(stage, "What do you want to do?", "Stand", "Hit", "Surrender");
+      choice = ChoiceDialog.show(stage, "What do you want to do?", "Stand", "Hit", "⚑");
 
-    if (choice.equals("Surrender"))
+    if (choice.equals("⚑"))
     {
       wager.surrender();
-      return;
+      return;  
     }
     if (choice.equals("Split"))
     {
-      wager.split();
+      wager.split(hand);
       return;
     }
     if (choice.equals("Stand"))

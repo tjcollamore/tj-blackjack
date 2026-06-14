@@ -7,20 +7,22 @@ public class Hand
   private List<Card> cards = new ArrayList<Card>();
   private int aceCount = 0;
   private List<Node> cardNodes;
-  private boolean isDealer;
-  private boolean shouldShowScore;
-  private boolean isDisplayed;
+  private boolean isDealer = false;
+  private boolean hasStarted = false;
   private boolean isSplittingBlocked = false;
   private boolean isSoft = false;
+  private ScoreBadge scoreBadge;
 
-  public Hand(IOutputter outputter, ShoeMgr shoeMgr, boolean isDealer, List<Node> cardNodes, boolean isDisplayed)
+  public Hand(IOutputter outputter, ShoeMgr shoeMgr, boolean isDealer, List<Node> cardNodes, boolean hasStarted, ScoreBadge scoreBadge)
   {
     this.outputter = outputter;
     this.isDealer = isDealer;
     this.cardNodes = cardNodes;
-    this.shouldShowScore = !isDealer;
-    this.isDisplayed = isDisplayed;
+    this.hasStarted = hasStarted;
+    this.scoreBadge = scoreBadge;
 
+    scoreBadge.setVisible(hasStarted && !isDealer);
+    
     Card card = shoeMgr.drawCard();
     addCard(card);
 
@@ -29,7 +31,7 @@ public class Hand
 
     //Testing: can always split
     Card card2 = shoeMgr.drawCard();
-    while (card.getRank() != card2.getRank())
+    while (card.getRank().getValue() != card2.getRank().getValue())
     {
       card2 = shoeMgr.drawCard();
     }
@@ -44,12 +46,8 @@ public class Hand
     outputter.output("Dealer down card: " + cards.get(1));
     
     cardNodes.set(1, CardFaceCreator.createFrontFace(cards.get(1).getSuit(), cards.get(1).getRank()));
-
-    if (!shouldShowScore)
-    {
-      shouldShowScore = true;
-      showScoreBadge();
-    }
+    
+    showScoreBadge();
   }
 
   public void addCard(Card card)
@@ -59,7 +57,7 @@ public class Hand
     if (card.isAce())
       aceCount++;
 
-    if (isDisplayed)
+    if (hasStarted)
       displayCard(card);
   }
 
@@ -70,16 +68,13 @@ public class Hand
 
     if (card.isAce())
       aceCount++;
-
-    if (isDisplayed)
-      displayCard(card);
   }
 
   private void displayCard(Card card)
   {
     // Removes the score badge if it exists (It will be the last node)
-    if (cardNodes.size() > 0 && cardNodes.get(cardNodes.size() - 1) instanceof ScoreBadge)
-      cardNodes.remove(cardNodes.size() - 1);
+    //if (cardNodes.size() > 0 && cardNodes.get(cardNodes.size() - 1) instanceof ScoreBadge)
+      //cardNodes.remove(cardNodes.size() - 1);
     
     if (isDealer && cards.size() == 2)
     {
@@ -93,16 +88,15 @@ cardNodes.add(CardFaceCreator.createFrontFace(card.getSuit(), card.getRank()));
         outputter.output("Dealer drawn card: " + card);
       else
         outputter.output("Your drawn card: " + card);
-    }
-    if (shouldShowScore)
       showScoreBadge();
+    }
   }
 
-  public void display()
+  public void start()
   {
-    if (isDisplayed)
+    if (hasStarted)
       return;
-    isDisplayed = true;
+    hasStarted = true;
     cardNodes.clear();
     for (Card card : cards)
       displayCard(card);
@@ -113,16 +107,18 @@ cardNodes.add(CardFaceCreator.createFrontFace(card.getSuit(), card.getRank()));
   {
     if (cards.get(slot).isAce())
       aceCount--;
-    if (isDisplayed)
+    if (hasStarted)
       cardNodes.remove(slot);
     return cards.remove(slot);
   }
   
   private void showScoreBadge()
   {
-    ScoreBadge playerBadge = new ScoreBadge();
-    playerBadge.setScore(this, getScore());
-    cardNodes.add(playerBadge);
+    //ScoreBadge badge = new ScoreBadge();
+    //badge.setScore(this);
+    //cardNodes.add(badge);
+
+    scoreBadge.setScore(this);
   }
   
   public int getScore()
@@ -139,14 +135,14 @@ cardNodes.add(CardFaceCreator.createFrontFace(card.getSuit(), card.getRank()));
       score -= 10;
       localAceCount--;
     }
+    
     isSoft = (localAceCount > 0);
     return score;
   }
 
   public boolean isSoft()
   {
-    getScore();
-    return isSoft;
+    return !isBlackjack() && isSoft;
   }
 
   public boolean isBusted()
@@ -169,11 +165,16 @@ cardNodes.add(CardFaceCreator.createFrontFace(card.getSuit(), card.getRank()));
     if (isSplittingBlocked)
       return false;
     
-    return cards.get(0).getRank() == cards.get(1).getRank();
+    return cards.get(0).getRank().getValue() == cards.get(1).getRank().getValue();
   }
 
   public void blockSplitting()
   {
     isSplittingBlocked = true;
+  }
+
+  public boolean isDoubleAces()
+  {
+    return cards.get(0).isAce() && cards.get(1).isAce();
   }
 }

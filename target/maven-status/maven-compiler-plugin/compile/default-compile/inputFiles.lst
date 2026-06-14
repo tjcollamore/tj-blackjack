@@ -1,8 +1,8 @@
 /home/runner/workspace/src/main/java/Card.java
-/home/runner/workspace/src/main/java/Hand.java
 /home/runner/workspace/src/main/java/GameOptions.java
-/home/runner/workspace/src/main/java/PlayerInteractiveHandStrategy.java
+/home/runner/workspace/src/main/java/Hand.java
 /home/runner/workspace/src/main/java/CardFaceCreator.java
+/home/runner/workspace/src/main/java/PlayerInteractiveHandStrategy.java
 /home/runner/workspace/src/main/java/Wager.java
 /home/runner/workspace/src/main/java/Rank.java
 /home/runner/workspace/src/main/java/IOutputter.java
@@ -16,12 +16,11 @@
 /home/runner/workspace/src/main/java/Round.java
 /home/runner/workspace/src/main/java/DealerHandStrategy.java
 /home/runner/workspace/src/main/java/SubroundBadge.java
-/home/runner/workspace/src/main/java/WagerChip.java
 /home/runner/workspace/src/main/java/BetDialog.java
 /home/runner/workspace/src/main/java/DemoApp.java
 /home/runner/workspace/src/main/java/RoundResultAnalyzer.java
-/home/runner/workspace/src/main/java/SplitBadgeContainer.java
 /home/runner/workspace/src/main/java/Suit.java
+/home/runner/workspace/src/main/java/SplitBadgeContainer.java
 /home/runner/workspace/src/main/java/BlackjackSceneCreator.java
 /home/runner/workspace/src/main/java/HandStrategy.java
 /home/runner/workspace/src/main/java/ChoiceDialog.java

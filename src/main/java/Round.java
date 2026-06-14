@@ -5,24 +5,20 @@ import javafx.stage.Stage;
 public class Round
 {
   private Stage stage;
+  private BlackjackSceneCreator sceneCreator;
   private IOutputter outputter;
   private ShoeMgr shoeMgr;
   private HandStrategy playerHandStrategy;
-  private List<Node> dealerCardNodes;
-  private List<Node> playerCardNodes;
-  private SubroundBadge subroundBadge;
   private int lastBetAmount;
   private Bankroll bankroll;
 
-  public Round(Stage stage, IOutputter outputter, ShoeMgr shoeMgr, HandStrategy playerHandStrategy, List<Node> dealerCardNodes, SubroundBadge subroundBadge, List<Node> playerCardNodes, int betAmount, Bankroll bankroll)
+  public Round(Stage stage, BlackjackSceneCreator sceneCreator, IOutputter outputter, ShoeMgr shoeMgr, HandStrategy playerHandStrategy, int betAmount, Bankroll bankroll)
   {
     this.stage = stage;
+    this.sceneCreator = sceneCreator;
     this.outputter = outputter;
     this.shoeMgr = shoeMgr;
     this.playerHandStrategy = playerHandStrategy;
-    this.dealerCardNodes = dealerCardNodes;
-    this.playerCardNodes = playerCardNodes;
-    this.subroundBadge = subroundBadge;
     this.lastBetAmount = betAmount;
     this.bankroll = bankroll;
   }
@@ -36,24 +32,24 @@ public class Round
     int maxNumSubrounds = 4;
     Hand[] playerHands = new Hand[maxNumSubrounds]; 
 
-    Hand dealerHand = new Hand(outputter, shoeMgr, true, dealerCardNodes, true);
+    Hand dealerHand = new Hand(outputter, shoeMgr, true, sceneCreator.getDealerCards(), true, sceneCreator.getDealerScoreBadge());
 
-playerHands[0] = new Hand(outputter, shoeMgr, false, playerCardNodes, true);
+playerHands[0] = new Hand(outputter, shoeMgr, false, sceneCreator.getPlayerCards(), true, sceneCreator.getPlayerScoreBadge());
 
-    String resultMessage = "";   
+    String resultMessage = "";
     for (int i = 0; i < playerHands.length; i++)
     {
       if (playerHands[i] == null)
         break;
 
-      playerHands[i].display();
+      playerHands[i].start();
 
-      subroundBadge.update(i+1, getNumSubrounds(playerHands));
+      sceneCreator.getSubroundBadge().update(i+1, getNumSubrounds(playerHands));
       
       resultMessage = playSubRound(playerHands[i], dealerHand, wager);
       if (wager.didSplit())
       {
-        Hand newPlayerHand = new Hand(outputter, shoeMgr, false, playerCardNodes, false);
+        Hand newPlayerHand = new Hand(outputter, shoeMgr, false, sceneCreator.getPlayerCards(), false, sceneCreator.getPlayerScoreBadge());
         
         int nextFreeSlot = nextFreeSlot(playerHands);
         playerHands[nextFreeSlot] = newPlayerHand;
@@ -126,13 +122,13 @@ Card firstHandSecondCard = playerHands[i].removeCard(1);
 
     if (!playerHand.isBlackjack() && !dealerHand.isBlackjack())
     {
-      playerHandStrategy.play(playerHand, wager, shoeMgr);
+      if (!wager.didSplitAces())
+        playerHandStrategy.play(playerHand, wager, shoeMgr);
 
       if (wager.didSplit())
       {
         return "";
       }
-      
       outputter.output("Your score is: " + playerHand.getScore());
       
       if (!playerHand.isBusted() && !wager.didSurrender())

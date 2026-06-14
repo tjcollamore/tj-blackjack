@@ -48,7 +48,7 @@ classPaths = ["."]
 mainClass = "Main"
 
 [workflows]
-runButton = "Run Tests"
+runButton = "Run JavaFX App"
 
 [[workflows.workflow]]
 name = "Run Tests"
@@ -73,3 +73,6 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "mvn clean compile exec:java"
+
+[agent]
+expertMode = true

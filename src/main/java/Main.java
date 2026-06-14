@@ -23,28 +23,31 @@ public class Main extends Application
     primaryStage.setScene(scene);
     primaryStage.show();
     
-    startGame(primaryStage, sceneCreator.getDealerCards(),  sceneCreator.getPlayerCards(), sceneCreator.getSubroundBadge(), sceneCreator.getBankrollLabel());
+    startGame(primaryStage, sceneCreator);
   }
 
-  private void startGame(Stage stage, List<Node> dealerCardNodes, List<Node> playerCardNodes, SubroundBadge subroundBadge, Label bankrollLabel)
+  private void startGame(Stage stage, BlackjackSceneCreator sceneCreator)
   {
     IOutputter outputter = new ConsoleOutputter();
     ShoeMgr shoeMgr = new ShoeMgr(outputter, GameOptions.DECKS_IN_SHOE);
     HandStrategy playerHandStrategy = new PlayerInteractiveHandStrategy(stage);
 
     String resultMessage;
-    Bankroll bankroll = new Bankroll(GameOptions.STARTING_BANKROLL, bankrollLabel, outputter);
+    Bankroll bankroll = new Bankroll(GameOptions.STARTING_BANKROLL, sceneCreator.getBankrollLabel(), outputter);
 
     int betAmount = GameOptions.TABLE_MIN_BET;
     
     do
     {      
-      dealerCardNodes.clear();
-      playerCardNodes.clear();
+      sceneCreator.getDealerCards().clear();
+      sceneCreator.getPlayerCards().clear();
+      sceneCreator.getDealerScoreBadge().setVisible(false);
+      sceneCreator.getPlayerScoreBadge().setVisible(false);
+      sceneCreator.getSubroundBadge().update(1, 1);
 
       bankroll.addFundsIfBroke(stage, GameOptions.STARTING_BANKROLL, GameOptions.TABLE_MIN_BET);
   
-      Round round = new Round(stage, outputter, shoeMgr, playerHandStrategy, dealerCardNodes, subroundBadge, playerCardNodes, betAmount, bankroll);
+      Round round = new Round(stage, sceneCreator, outputter, shoeMgr, playerHandStrategy, betAmount, bankroll);
       resultMessage = round.play();
       
       betAmount = round.getLastBetAmount();

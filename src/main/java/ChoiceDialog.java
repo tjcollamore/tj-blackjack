@@ -5,89 +5,72 @@ import javafx.scene.control.Button;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
-public class ChoiceDialog
-{
-    public static String show(Stage ownerStage, String message, String... options)
-    {
+public class ChoiceDialog {
+    public static String show(Stage ownerStage, String message, String... options) {
         final String[] result = {null};
 
-        //Background overlay
-        StackPane overlay = new StackPane();
-        overlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.4);");
-        overlay.setAlignment(Pos.CENTER);
-
-        //Dialog content
-        VBox content = new VBox(15);
-        content.setAlignment(Pos.CENTER);
-        content.setPadding(new Insets(20));
-        content.setBackground(new Background(new BackgroundFill(Color.web("#f9f9f9"), CornerRadii.EMPTY, Insets.EMPTY)));
-
-        Text text = new Text(message);
-        text.setStyle("-fx-font-size: 16px; -fx-fill: #333; -fx-text-alignment: center;");
-
-        HBox buttons = new HBox(10);
-        buttons.setAlignment(Pos.CENTER);
+        // Dialog content
+        HBox buttonBar = new HBox(10);
+        buttonBar.setAlignment(Pos.CENTER);
+        buttonBar.setPadding(new Insets(10));
+        buttonBar.setBackground(new Background(new BackgroundFill(Color.rgb(40, 40, 40, 0.95), CornerRadii.EMPTY, Insets.EMPTY)));
+//        buttonBar.setMaxWidth(Region.USE_PREF_SIZE);
+        buttonBar.setMaxWidth(Double.MAX_VALUE); // allow it to stretch
+        HBox.setHgrow(buttonBar, Priority.ALWAYS); // fill horizontal space
 
         for (int i = 0; i < options.length; i++) {
-            String label = options[i];
+            String originalLabel = options[i];
+            if (originalLabel.equals(message)) continue; // Skip message-as-button
+
+            String label = originalLabel;
+
             Button btn = new Button(label);
             btn.setPrefWidth(100);
-            String baseColor = (i == 0) ? "#007bff" : "#6c757d";  
-            String focusColor = (i == 0) ? "#339af0" : "#868e96";
+            String baseColor = (i == 1) ? "#007bff" : "#6c757d";  // Make second button primary
+            String focusColor = (i == 1) ? "#339af0" : "#868e96";
             applyButtonStyles(btn, baseColor, focusColor);
 
+            final String finalLabel = originalLabel; // Ensure final variable for lambda
             btn.setOnAction(e -> {
-                result[0] = label;
-                ((Stage) content.getScene().getWindow()).close();
+                result[0] = finalLabel;
+                ((Stage) buttonBar.getScene().getWindow()).close();
             });
 
-            buttons.getChildren().add(btn);
+            buttonBar.getChildren().add(btn);
         }
 
-        content.getChildren().addAll(text, buttons);
+        // Outer wrapper to dock to bottom only
+        VBox root = new VBox();
+        root.setAlignment(Pos.BOTTOM_CENTER);
+        root.setPadding(new Insets(0, 0, 0, 0)); // Fine-tuned vertical padding
+//        root.setBackground(Background.EMPTY);
+        root.setBackground(new Background(
+            new BackgroundFill(Color.rgb(40, 40, 40, 0.95), CornerRadii.EMPTY, Insets.EMPTY)
+        ));
+        root.getChildren().add(buttonBar);
 
-        //Outer container
-        StackPane dialogBox = new StackPane();
-        dialogBox.setPadding(new Insets(2));
-        dialogBox.getChildren().add(content);
-        dialogBox.setBackground(new Background(new BackgroundFill(
-                Color.web("#f9f9f9"), CornerRadii.EMPTY, Insets.EMPTY
-        )));
-        dialogBox.setEffect(new DropShadow(4, Color.rgb(0, 0, 0, 0.1)));
+        // Only use root in the Scene (no StackPane wrapper)
+        Scene scene = new Scene(root);
+        scene.setFill(Color.TRANSPARENT);
 
-        overlay.getChildren().add(dialogBox);
-
-        //Stage setup
+        // Stage setup
         Stage dialogStage = new Stage();
         dialogStage.initStyle(StageStyle.TRANSPARENT);
-        dialogStage.initModality(Modality.APPLICATION_MODAL);
+        dialogStage.initModality(Modality.NONE);
         dialogStage.initOwner(ownerStage);
-        dialogStage.setScene(new Scene(overlay, Color.TRANSPARENT));
+        dialogStage.setScene(scene);
 
-        //Position offset from center
         dialogStage.setOnShown(e -> {
             javafx.application.Platform.runLater(() -> {
-                double offsetX = 0;
-                dialogStage.setX(ownerStage.getX() + ownerStage.getWidth() / 2 - dialogStage.getWidth() / 2 + offsetX);
-                double offsetY = 0;
-                dialogStage.setY(ownerStage.getY() + ownerStage.getHeight() / 2 - dialogStage.getHeight() / 2 + offsetY);
+                dialogStage.setWidth(ownerStage.getWidth());
+                dialogStage.setHeight(root.prefHeight(-1));
+                dialogStage.setX(ownerStage.getX());
+                dialogStage.setY(ownerStage.getY() + ownerStage.getHeight() - dialogStage.getHeight());
             });
-        });
-
-        //Draggable dialog
-        final Delta dragDelta = new Delta();
-        dialogBox.setOnMousePressed(e -> {
-            dragDelta.x = dialogStage.getX() - e.getScreenX();
-            dragDelta.y = dialogStage.getY() - e.getScreenY();
-        });
-        dialogBox.setOnMouseDragged(e -> {
-            dialogStage.setX(e.getScreenX() + dragDelta.x);
-            dialogStage.setY(e.getScreenY() + dragDelta.y);
         });
 
         dialogStage.showAndWait();
@@ -95,11 +78,15 @@ public class ChoiceDialog
     }
 
     private static void applyButtonStyles(Button button, String baseColor, String focusColor) {
+        // Set default to rounded style (even before focused)
         button.setStyle(String.format("""
             -fx-background-color: %s;
             -fx-text-fill: white;
             -fx-font-weight: bold;
             -fx-background-radius: 4px;
+            -fx-border-color: transparent;
+            -fx-border-width: 2px;
+            -fx-border-radius: 4px;
         """, baseColor));
 
         button.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
@@ -114,9 +101,5 @@ public class ChoiceDialog
                 -fx-border-radius: 4px;
             """, color, isNowFocused ? "#66b2ff" : "transparent"));
         });
-    }
-
-    private static class Delta {
-        double x, y;
     }
 }

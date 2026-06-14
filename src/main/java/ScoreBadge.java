@@ -22,6 +22,8 @@ public class ScoreBadge extends StackPane
     
     public ScoreBadge()
     {
+        setVisible(false);
+        
         setPrefSize(30, 30);
         setMaxSize(30, 30);
         setMinSize(30, 30);
@@ -57,22 +59,24 @@ public class ScoreBadge extends StackPane
     }
 
  
-    public void setScore(Hand hand, int score)
+    public void setScore(Hand hand)
     {
         if (hand.isSoft())
             softIndicator.setVisible(true);
         if (hand.isBusted())
         {
-            setText(String.valueOf(score), Color.DARKRED);
+            setText(String.valueOf(hand.getScore()), Color.DARKRED);
         } else if (hand.isBlackjack())
         {
-            setText(String.valueOf(score), Color.BLACK);
+            setText(String.valueOf(hand.getScore()), Color.BLACK);
             playGlow();
         } else
         {
-            setText(String.valueOf(score), Color.DARKSLATEBLUE);
+            setText(String.valueOf(hand.getScore()), Color.DARKSLATEBLUE);
         }
+        setVisible(true);
     }
+    
     public void setText(String text, Color bgColor)
     {
         label.setText(text);

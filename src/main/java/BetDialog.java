@@ -9,6 +9,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import java.util.Map;
 
 public class BetDialog
 {   
@@ -34,43 +35,34 @@ public class BetDialog
 
         VBox content = new VBox(15);
         content.setAlignment(Pos.CENTER);
-        content.setPadding(new Insets(20));
+        content.setPadding(new Insets(12));
         content.setBackground(new Background(new BackgroundFill(Color.web("#f9f9f9"), CornerRadii.EMPTY, Insets.EMPTY)));
+        content.setSpacing(10);
 
-        Text prompt = new Text("Select your wager:");
+        Text prompt = new Text("What's your bet?");
         prompt.setStyle("-fx-font-size: 16px; -fx-fill: #333;");
 
         Spinner<Integer> spinner = new Spinner<>(minBet, maxBet, initialBet, 5);
         spinner.setEditable(false);
-        spinner.setPrefWidth(150);
+        spinner.setPrefWidth(75);
 
-        HBox chipPreview = new HBox(); // You can draw chips here later
-        chipPreview.setSpacing(5);
-        chipPreview.setAlignment(Pos.CENTER);
-        chipPreview.setPrefHeight(60);
-
+        VBox chipPreviewContainer = new VBox();
+        chipPreviewContainer.setAlignment(Pos.CENTER);
+        chipPreviewContainer.setPrefHeight(100);
+        
         HBox buttons = new HBox(10);
         buttons.setAlignment(Pos.CENTER);
 
         Button submit = new Button("Let's go!");
-//        Button cancel = new Button("Cancel");
 
         applyButtonStyles(submit, "#007bff", "#339af0");
-//        applyButtonStyles(cancel, "#6c757d", "#868e96");
 
         submit.setOnAction(e -> {
             result[0] = spinner.getValue();
-           // previousBet = spinner.getValue();
             ((Stage) content.getScene().getWindow()).close();
         });
-/*
-        cancel.setOnAction(e -> {
-            result[0] = null;
-            ((Stage) content.getScene().getWindow()).close();
-        });
-*/
-        buttons.getChildren().addAll(submit/*, cancel*/);
-        content.getChildren().addAll(prompt, spinner, chipPreview, buttons);
+        buttons.getChildren().addAll(submit);
+        content.getChildren().addAll(prompt, spinner, chipPreviewContainer, buttons);
 
         StackPane dialogBox = new StackPane();
         dialogBox.setPadding(new Insets(2));
@@ -105,7 +97,19 @@ public class BetDialog
             dialogStage.setX(e.getScreenX() + dragDelta.x);
             dialogStage.setY(e.getScreenY() + dragDelta.y);
         });
+/*
+        // Initial chip preview
+        Map<WagerChip, Integer> chips = WagerChip.getChipsByValue(spinner.getValue());
+        ChipStackView previewView = new ChipStackView(chips, false);
+        chipPreviewContainer.getChildren().setAll(previewView);
 
+        // Update chip preview when spinner changes
+        spinner.valueProperty().addListener((obs, oldVal, newVal) -> {
+            Map<WagerChip, Integer> updatedChips = WagerChip.getChipsByValue(newVal);
+            ChipStackView updatedView = new ChipStackView(updatedChips, false);
+            chipPreviewContainer.getChildren().setAll(updatedView);
+        });
+*/        
         dialogStage.showAndWait();
         return result[0];
     }

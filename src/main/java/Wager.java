@@ -9,6 +9,7 @@ public class Wager
   private IOutputter outputter;
   private boolean didSurrender = false;
   private boolean didSplit = false;
+  private boolean didSplitAces = false;
 
   public Wager(Bankroll bankroll, int betAmount, IOutputter outputter)
   {
@@ -59,10 +60,17 @@ public class Wager
     return didSurrender;
   }
 
-  public void split()
+  public void split(Hand playerHand)
   {
     didSplit = true;
+    if (playerHand.isDoubleAces())
+      didSplitAces = true;
     bankroll.deduct(betAmount);
+  }
+
+  public boolean didSplitAces()
+  {
+    return didSplitAces;
   }
   
   public boolean didSplit()
