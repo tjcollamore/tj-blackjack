@@ -1,5 +1,5 @@
-Rank.class
 GameOptions.class
+Rank.class
 CardFaceCreator.class
 HandStrategy.class
 Bankroll.class
@@ -9,8 +9,8 @@ ChoiceResult.class
 BetDialog$Delta.class
 ConsoleOutputter.class
 CardFaceCreator$1.class
-ScoreBadge.class
 Round.class
+ScoreBadge.class
 ChoiceDialog.class
 Main.class
 IOutputter.class
@@ -25,8 +25,8 @@ SplitBadgeContainer.class
 Shoe.class
 SubroundBadge.class
 Hand.class
-ShoeMgr.class
 DealerHandStrategy.class
+ShoeMgr.class
 DemoApp.class
 Card.class
 TextAreaOutputter.class

@@ -1,3 +1,12 @@
+Laptop setup if not using Replit:
+a. Install VS code
+b. Install Extensions for Java
+c. Install maven from maven.apache.org (download binaries and add folder to PATH env variable)
+d. Can run 'mvn -version' to check install
+e. Can run 'mvn clean javafx:run'
+
+
+
 1. Create a new project based on the Java template.
 
 2. Write a program to draw() a Card. I.e., create a Card class with a draw() method. Instantiate the Card from main() and call draw(). Output the Card's identifying information. Treat a Card as a random number between 1 and 13. This id instance variable can be set in the default contructor. (To pick a random number between 1 and 13, use this code: “id = new Random().nextInt(13) + 1;” You’ll also need to “import java.util.Random;”)
