@@ -1,0 +1,11 @@
+target/
+javafx-sdk-*/
+attached_assets-JUNK/
+
+.vscode/
+.classpath
+.project
+.settings/
+
+*.class
+*.log
