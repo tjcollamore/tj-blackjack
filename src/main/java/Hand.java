@@ -26,16 +26,16 @@ public class Hand
     Card card = shoeMgr.drawCard();
     addCard(card);
 
-   // card = shoeMgr.drawCard();
-  //  addCard(card);
+    card = shoeMgr.drawCard();
+    addCard(card);
 
     //Testing: can always split
-    Card card2 = shoeMgr.drawCard();
-    while (card.getRank().getValue() != card2.getRank().getValue())
-    {
-      card2 = shoeMgr.drawCard();
-    }
-    addCard(card2);
+ //   Card card2 = shoeMgr.drawCard();
+ //   while (card.getRank().getValue() != card2.getRank().getValue())
+ //   {
+ //     card2 = shoeMgr.drawCard();
+ //   }
+ //   addCard(card2);
     
     
     outputter.output("");
