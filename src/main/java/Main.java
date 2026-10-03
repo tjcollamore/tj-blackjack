@@ -22,8 +22,7 @@ public class Main extends Application
     primaryStage.setTitle("TJ's Blackjack!");
     primaryStage.setScene(scene);
     primaryStage.show();
-    
-    startGame(primaryStage, sceneCreator);
+    Platform.runLater(() -> startGame(primaryStage, sceneCreator));
   }
 
   private void startGame(Stage stage, BlackjackSceneCreator sceneCreator)
@@ -32,28 +31,34 @@ public class Main extends Application
     ShoeMgr shoeMgr = new ShoeMgr(outputter, GameOptions.DECKS_IN_SHOE);
     HandStrategy playerHandStrategy = new PlayerInteractiveHandStrategy(stage);
 
-    String resultMessage;
     Bankroll bankroll = new Bankroll(GameOptions.STARTING_BANKROLL, sceneCreator.getBankrollLabel(), outputter);
 
-    int betAmount = GameOptions.TABLE_MIN_BET;
-    
-    do
+    WagerSelector wagerSelector = new WagerSelector(GameOptions.TABLE_MIN_BET, GameOptions.TABLE_MAX_BET);
+
+    while(true)
     {      
-      sceneCreator.getDealerCards().clear();
-      sceneCreator.getPlayerCards().clear();
+      bankroll.addFundsIfBroke(stage, GameOptions.STARTING_BANKROLL, GameOptions.TABLE_MIN_BET);
+
+      int maxBet = Math.min((int) bankroll.get(), GameOptions.TABLE_MAX_BET);
+      wagerSelector.setMaxWager(maxBet);
+      
+      if (ChoiceDialog.show(stage, "",
+          null,               // no gear until settings works
+          wagerSelector, "DEAL", "COLOR UP")
+          .equals("COLOR UP"))
+        break;
+
+      int betAmount = wagerSelector.getWager();
+      
       sceneCreator.getDealerScoreBadge().setVisible(false);
       sceneCreator.getPlayerScoreBadge().setVisible(false);
-      sceneCreator.getSubroundBadge().update(1, 1);
-
-      bankroll.addFundsIfBroke(stage, GameOptions.STARTING_BANKROLL, GameOptions.TABLE_MIN_BET);
-  
+        
       Round round = new Round(stage, sceneCreator, outputter, shoeMgr, playerHandStrategy, betAmount, bankroll);
-      resultMessage = round.play();
-      
-      betAmount = round.getLastBetAmount();
+      round.play();
+     
       outputter.output("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
       shoeMgr.checkCutCard();
-    } while (ChoiceDialog.show(stage, resultMessage + "\n\nPlay another round?", "Deal", "Exit").equals("Deal"));
+    }
 
     Platform.exit();
   }    

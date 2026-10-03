@@ -50,8 +50,8 @@ public class Bankroll
     {
       if (bankroll < tableMinBet)
       {
-        outputter.output("You do not have enough funds. Withdrawing another " + getFormattedCurrency(amount)  + " from the ATM.");
-        ChoiceDialog.show(stage, "You do not have enough funds.\nWithdrawing another " + getFormattedCurrency(amount) + " from the ATM.", "OK");
+        outputter.output("You do not have funds. Withdrawing another " + getFormattedCurrency(amount)  + " from the ATM.");
+        ChoiceDialog.show(stage, "You do not have funds.\nWithdrawing another " + getFormattedCurrency(amount) + " from the ATM.", "OK");
         deposit(amount);
       }
     }

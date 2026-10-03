@@ -3,6 +3,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.Node;
@@ -13,14 +14,26 @@ import javafx.stage.Stage;
 import java.util.*;
 
 public class BlackjackSceneCreator {
+  private static final double ACTION_BAR_CLEARANCE = 50;
+  
   private HBox dealerCards = new HBox(10);
   private HBox playerCards = new HBox(10);
   private Label bankrollLabel = new Label();
+  private Label shoeOverlay = new Label("[Shoe]");
+  private Label discardOverlay = new Label("[Discard]");
   private SubroundBadge subroundBadge = new SubroundBadge();
   private final ScoreBadge playerScoreBadge = new ScoreBadge();
   private final ScoreBadge dealerScoreBadge = new ScoreBadge();
+  private final ImageView gearIcon =
+    new ImageView("file:src/main/resources/gear.png");
+  
+  public Scene create() 
+  {
+    // For now, don't show the placeholder strings
+    shoeOverlay.setOpacity(0);
+    discardOverlay.setOpacity(0);
 
-  public Scene create() {
+    
     StackPane layeredPane = new StackPane();
     Scene scene = new Scene(layeredPane, 500, 600);
 
@@ -32,6 +45,16 @@ public class BlackjackSceneCreator {
 
     layeredPane.getChildren().add(root);
 
+    // Discard pile upper right
+    discardOverlay.setStyle(
+      "-fx-text-fill: white;" +
+      "-fx-font-weight: bold;" +
+      "-fx-padding: 5px;"
+    );
+    layeredPane.getChildren().add(discardOverlay);
+    StackPane.setAlignment(discardOverlay, Pos.TOP_RIGHT);
+    StackPane.setMargin(discardOverlay, new Insets(10));
+    
     // === LEFT PANEL ===
     VBox leftPanel = new VBox();
     leftPanel.setPadding(new Insets(10));
@@ -39,7 +62,6 @@ public class BlackjackSceneCreator {
     leftPanel.setMaxWidth(140);
     leftPanel.setMinWidth(140);
 
-    Label shoeOverlay = new Label("[Shoe]");
     shoeOverlay.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5px;");
     VBox.setMargin(shoeOverlay, new Insets(0, 0, 10, 0));
 
@@ -47,18 +69,21 @@ public class BlackjackSceneCreator {
     VBox.setVgrow(spacerTop, Priority.ALWAYS);
 
     Label statsPlaceholder = new Label("[Stats]");
+    statsPlaceholder.setOpacity(0);
     statsPlaceholder.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
     VBox.setMargin(statsPlaceholder, new Insets(0, 0, 10, 0));
 
     Region spacerMiddle = new Region();
     VBox.setVgrow(spacerMiddle, Priority.ALWAYS);
 
-    Label chipStackPlaceholder = new Label("[Chips]");
+    Label chipStackPlaceholder = new Label("[Chips]");   
     chipStackPlaceholder.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
-
+    chipStackPlaceholder.setOpacity(0);
+    
     setupBankrollDisplay();
     VBox bankrollBox = new VBox(5, chipStackPlaceholder, bankrollLabel);
     bankrollBox.setAlignment(Pos.BOTTOM_CENTER);
+    bankrollBox.setFillWidth(false);
 
     Region spacerBottom = new Region();
     VBox.setVgrow(spacerBottom, Priority.ALWAYS);
@@ -105,7 +130,7 @@ public class BlackjackSceneCreator {
 
     VBox playerArea = new VBox(playerStack);
     playerArea.setAlignment(Pos.BOTTOM_CENTER);
-    playerArea.setPadding(new Insets(0, 10, 30, 10)); // extra bottom padding to leave space for ChoiceDialog
+    playerArea.setPadding(new Insets(0, 10, ACTION_BAR_CLEARANCE, 10)); // extra bottom padding to leave space for ChoiceDialog
     VBox.setVgrow(playerArea, Priority.ALWAYS);
     playerArea.setMaxWidth(Double.MAX_VALUE);
 
@@ -125,20 +150,44 @@ public class BlackjackSceneCreator {
     StackPane.setAlignment(mainContent, Pos.CENTER);
     root.setCenter(centeredWrapper);
 
-    ImageView gearIcon = new ImageView("file:src/main/resources/gear.png");
-    gearIcon.setFitWidth(28);
-    gearIcon.setFitHeight(28);
+    gearIcon.setFitWidth(20);
+    gearIcon.setFitHeight(20);
     gearIcon.setPreserveRatio(true);
-    gearIcon.setOpacity(0.8);
-    gearIcon.setOnMouseEntered(e -> gearIcon.setOpacity(1.0));
-    gearIcon.setOnMouseExited(e -> gearIcon.setOpacity(0.8));
-    StackPane.setAlignment(gearIcon, Pos.BOTTOM_LEFT);
-    StackPane.setMargin(gearIcon, new Insets(10));
-    layeredPane.getChildren().add(gearIcon);
+    ColorAdjust muted = new ColorAdjust();
+    muted.setSaturation(-1.0);
+    muted.setBrightness(0.25);
 
+    gearIcon.setEffect(muted);
+    gearIcon.setOpacity(0.75);
+
+    gearIcon.setOnMouseEntered(e -> {
+        gearIcon.setEffect(null);
+        gearIcon.setOpacity(1.0);
+    });
+
+    gearIcon.setOnMouseExited(e -> {
+        gearIcon.setEffect(muted);
+        gearIcon.setOpacity(0.75);
+    });
+    
     return scene;
   }
 
+  public Node getShoeAnchor()
+  {
+    return shoeOverlay;
+  }
+  
+  public Node getDiscardAnchor()
+  {
+    return discardOverlay;
+  }
+  
+  public ImageView getGearIcon()
+  {
+      return gearIcon;
+  }
+  
   public SubroundBadge getSubroundBadge() {
     return subroundBadge;
   }
@@ -167,17 +216,17 @@ public class BlackjackSceneCreator {
 
   private void setupBankrollDisplay() {
     bankrollLabel.setText("$0.00");
-    bankrollLabel.setStyle("-fx-font-size: 18px;" +
+    bankrollLabel.setStyle("-fx-font-size: 16px;" +
                             "-fx-font-weight: bold;" +
                             "-fx-text-fill: #FFD700;" +
                             "-fx-background-color: rgba(0, 0, 0, 0.7);" +
                             "-fx-background-radius: 10px;" +
-                            "-fx-padding: 10px 15px;" +
+                            "-fx-padding: 10px 10px;" +
                             "-fx-border-color: #FFD700;" +
                             "-fx-border-width: 2px;" +
                             "-fx-border-radius: 10px;");
     bankrollLabel.setMinWidth(120);
-    bankrollLabel.setWrapText(true);
+    bankrollLabel.setWrapText(false);
     bankrollLabel.setAlignment(Pos.CENTER);
   }
 }

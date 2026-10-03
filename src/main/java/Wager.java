@@ -1,5 +1,3 @@
-import javafx.stage.Stage;
-
 public class Wager
 {
   private int betAmount;
@@ -19,12 +17,9 @@ public class Wager
     this.outputter = outputter;
   }
   
-  public int determineBetAmount(Stage stage, int tableMinBet, int tableMaxBet)
+  public void place()
   { 
-    int maxBet = Math.min((int)bankroll.get(), tableMaxBet);
-    betAmount = BetDialog.show(stage, betAmount, tableMinBet, maxBet);
     bankroll.deduct(betAmount);
-    return betAmount;
   }
   
   public void win()
@@ -115,6 +110,6 @@ public class Wager
 
   public boolean canDoubleOrSplit()
   {
-    return bankroll.get() > getBetAmount();
+    return bankroll.get() >= getBetAmount();
   }
 }

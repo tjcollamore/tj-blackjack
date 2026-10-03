@@ -1,4 +1,4 @@
 public interface HandStrategy
 {
-  public void play(Hand hand, Wager wager, ShoeMgr shoeMgr);
+  HandAction chooseAction(Hand hand, Wager wager);
 }

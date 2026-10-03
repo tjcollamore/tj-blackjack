@@ -9,41 +9,42 @@ public class PlayerInteractiveHandStrategy implements HandStrategy
     this.stage = stage;
   }
   
-  public void play(Hand hand, Wager wager, ShoeMgr shoeMgr)
+  public HandAction chooseAction(Hand hand, Wager wager)
   { 
     String choice;
-    if (wager.canDoubleOrSplit())
+
+    // Double, Split, and Surrender are only offered with the initial hand
+    if (hand.getNumCards() == 2)
     {
-      if (hand.isSplittable())
-        choice = ChoiceDialog.show(stage, "What do you want to do?", "Stand", "Hit", "Double", "Split", "⚑"); //🏳(U+1F3F3)
+      if (wager.canDoubleOrSplit())
+      {
+        if (hand.isSplittable())
+          choice = ChoiceDialog.show(stage, "", 
+                                     HandAction.STAND.getDisplayText(), 
+                                     HandAction.HIT.getDisplayText(), 
+                                     HandAction.DOUBLE.getDisplayText(), 
+                                     HandAction.SPLIT.getDisplayText(), 
+                                     HandAction.SURRENDER.getDisplayText()); 
+        else
+          choice = ChoiceDialog.show(stage, "", 
+                                     HandAction.STAND.getDisplayText(), 
+                                     HandAction.HIT.getDisplayText(), 
+                                     HandAction.DOUBLE.getDisplayText(), 
+                                     HandAction.SURRENDER.getDisplayText()); 
+      }
       else
-        choice = ChoiceDialog.show(stage, "What do you want to do?", "Stand", "Hit", "Double", "⚑");
+        choice = ChoiceDialog.show(stage, "", 
+                                   HandAction.STAND.getDisplayText(), 
+                                   HandAction.HIT.getDisplayText(), 
+                                   HandAction.SURRENDER.getDisplayText()); 
     }
     else
-      choice = ChoiceDialog.show(stage, "What do you want to do?", "Stand", "Hit", "⚑");
-
-    if (choice.equals("⚑"))
     {
-      wager.surrender();
-      return;  
+      choice = ChoiceDialog.show(stage, "", 
+                                  HandAction.STAND.getDisplayText(), 
+                                  HandAction.HIT.getDisplayText());
     }
-    if (choice.equals("Split"))
-    {
-      wager.split(hand);
-      return;
-    }
-    if (choice.equals("Stand"))
-      return;
-    if (choice.equals("Double"))
-      wager.doubleDown();
-    
-    do 
-    {
-      Card card = shoeMgr.drawCard();
-      hand.addCard(card);
-    } while (!wager.didDoubleDown() &&
-        !hand.isBusted() && 
-        !hand.is21() && 
-        ChoiceDialog.show(stage, "What do you want to do?", "Stand", "Hit").equals("Hit"));
+  
+    return HandAction.fromDisplayText(choice);
   }
 }

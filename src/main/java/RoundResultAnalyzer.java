@@ -5,49 +5,48 @@ public class RoundResultAnalyzer
     String result = "";
     if (playerHand.isBlackjack() && dealerHand.isBlackjack())
     {
-      result = "It's a tie!";
       wager.push();
+      result = "Push\nRecouped " + wager.getFormattedPayout();
     }
     else if (playerHand.isBlackjack())
     {
-      result = "Blackjack! You win!";
       wager.blackjack();
+      result = "BLACKJACK! YOU WON " + wager.getFormattedPayout() + "!";
     }
     else if (dealerHand.isBlackjack())
     {
-      result = "Dealer Blackjack! You lost!";
       wager.lose();
+      result = "Dealer Blackjack!";
     }
     else if (wager.didSurrender())
     {
-      result = "You surrendered!";
+      result = "SURRENDERED!\nRecouped " + wager.getFormattedPayout();
     }
     else if (playerHand.isBusted())
     {
-      result = "Busted! You lost!";
       wager.lose();
+      result = "Bust!";
     }
     else if (dealerHand.isBusted())
     {
-      result = "Dealer Busted! You won!";
       wager.win();
+      result = "YOU WON " + wager.getFormattedPayout() + "!";
     }
     else if (playerHand.getScore() > dealerHand.getScore())
     {
-      result = "You won!";
       wager.win();
+      result = "YOU WON " + wager.getFormattedPayout() + "!";
     }
     else if (playerHand.getScore() < dealerHand.getScore())
     {
-      result = "You lost!";
       wager.lose();
+      result = "Dealer Wins";
     }
     else
     {
-      result = "It's a tie!";
       wager.push();
+      result = "Push\nRecouped " + wager.getFormattedPayout();
     }
-    result += "\nYour payout is: " + wager.getFormattedPayout();
     outputter.output(result);
     return result;
   }

@@ -9,6 +9,7 @@ import javafx.util.Duration;
 public class SubroundBadge extends StackPane {
     private final Label label;
     private boolean visibleState = false;
+    private Timeline animation;
 
     public SubroundBadge() {
         setPickOnBounds(false);
@@ -29,6 +30,20 @@ public class SubroundBadge extends StackPane {
         setVisible(false);
     }
 
+    public void reset()
+    {
+        if (animation != null)
+            animation.stop();
+
+        visibleState = false;
+
+        setVisible(false);
+        setOpacity(0);
+        setTranslateY(-10);
+
+        label.setText("1 of 2");
+    }
+    
     public void update(int current, int total)
     {
         if (total > 1 && !visibleState) 
@@ -48,9 +63,13 @@ public class SubroundBadge extends StackPane {
         }
     }
 
-    private void fadeAndSlideIn() {
+    private void fadeAndSlideIn() 
+    {
+        if (animation != null)
+            animation.stop();      
         setVisible(true);
-        Timeline timeline = new Timeline(
+        
+        animation = new Timeline(
             new KeyFrame(Duration.ZERO,
                 new KeyValue(opacityProperty(), 0),
                 new KeyValue(translateYProperty(), -10)
@@ -60,11 +79,15 @@ public class SubroundBadge extends StackPane {
                 new KeyValue(translateYProperty(), 0)
             )
         );
-        timeline.play();
+        animation.play();
     }
 
-    private void fadeAndSlideOut() {
-        Timeline timeline = new Timeline(
+    private void fadeAndSlideOut() 
+    {
+        if (animation != null)
+            animation.stop();
+        
+        animation = new Timeline(
             new KeyFrame(Duration.ZERO,
                 new KeyValue(opacityProperty(), 1),
                 new KeyValue(translateYProperty(), 0)
@@ -74,7 +97,7 @@ public class SubroundBadge extends StackPane {
                 new KeyValue(translateYProperty(), -10)
             )
         );
-        timeline.setOnFinished(e -> setVisible(false));
-        timeline.play();
+        animation.setOnFinished(e -> setVisible(false));
+        animation.play();
     }
 }

@@ -61,8 +61,9 @@ public class ScoreBadge extends StackPane
  
     public void setScore(Hand hand)
     {
-        if (hand.isSoft())
-            softIndicator.setVisible(true);
+        setEffect(null);
+        softIndicator.setVisible(hand.isSoft());
+        
         if (hand.isBusted())
         {
             setText(String.valueOf(hand.getScore()), Color.DARKRED);
