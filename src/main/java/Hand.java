@@ -13,7 +13,7 @@ public class Hand
   private boolean isSoft = false;
   private ScoreBadge scoreBadge;
 
-  public Hand(IOutputter outputter, ShoeMgr shoeMgr, boolean isDealer, List<Node> cardNodes, boolean hasStarted, ScoreBadge scoreBadge)
+  public Hand(IOutputter outputter, boolean isDealer, List<Node> cardNodes, boolean hasStarted, ScoreBadge scoreBadge)
   {
     this.outputter = outputter;
     this.isDealer = isDealer;
@@ -22,35 +22,26 @@ public class Hand
     this.scoreBadge = scoreBadge;
 
     scoreBadge.setVisible(hasStarted && !isDealer);
-    
-    Card card = shoeMgr.drawCard();
-    addCard(card);
-
-    card = shoeMgr.drawCard();
-    addCard(card);
-
-    //Testing: can always split
- //   Card card2 = shoeMgr.drawCard();
- //   while (card.getRank().getValue() != card2.getRank().getValue())
- //   {
- //     card2 = shoeMgr.drawCard();
- //   }
- //   addCard(card2);
-    
-    
     outputter.output("");
   }
 
   public void showDealerHoleCard()
   {
     outputter.output("Dealer down card: " + cards.get(1));
-    
-    cardNodes.set(1, CardFaceCreator.createFrontFace(cards.get(1).getSuit(), cards.get(1).getRank()));
-    
     showScoreBadge();
   }
 
-  public void addCard(Card card)
+  public Card getDealerHoleCard()
+  {
+    return cards.get(1);
+  }
+
+  public CardView getDealerHoleCardView()
+  {
+    return (CardView) cardNodes.get(1);
+  }
+  
+  public CardView addCard(Card card)
   {
     cards.add(card);
 
@@ -58,40 +49,45 @@ public class Hand
       aceCount++;
 
     if (hasStarted)
-      displayCard(card);
+      return displayCard(card);
+
+    return null;
   }
 
-  // This variant used when splitting
-  public void addCardToFront(Card card)
+  private CardView displayCard(Card card)
   {
-    cards.add(0, card);
+    CardView cardView = new CardView();
 
-    if (card.isAce())
-      aceCount++;
-  }
-
-  private void displayCard(Card card)
-  {
-    // Removes the score badge if it exists (It will be the last node)
-    //if (cardNodes.size() > 0 && cardNodes.get(cardNodes.size() - 1) instanceof ScoreBadge)
-      //cardNodes.remove(cardNodes.size() - 1);
-    
     if (isDealer && cards.size() == 2)
     {
-      cardNodes.add(CardFaceCreator.createBackFace());
-      outputter.output("Dealer drawn card: <Face Down>");
+      cardView.showBack();
+
+      cardNodes.add(cardView);
+
+      outputter.output(
+          "Dealer drawn card: <Face Down>"
+      );
     }
     else
     {
-cardNodes.add(CardFaceCreator.createFrontFace(card.getSuit(), card.getRank()));
+      cardView.showFront(card);
+
+      cardNodes.add(cardView);
+
       if (isDealer)
-        outputter.output("Dealer drawn card: " + card);
+        outputter.output(
+            "Dealer drawn card: " + card
+        );
       else
-        outputter.output("Your drawn card: " + card);
+        outputter.output(
+            "Your drawn card: " + card
+        );
+
       showScoreBadge();
     }
+    return cardView;
   }
-
+  
   public void start()
   {
     if (hasStarted)
@@ -114,10 +110,6 @@ cardNodes.add(CardFaceCreator.createFrontFace(card.getSuit(), card.getRank()));
   
   private void showScoreBadge()
   {
-    //ScoreBadge badge = new ScoreBadge();
-    //badge.setScore(this);
-    //cardNodes.add(badge);
-
     scoreBadge.setScore(this);
   }
   
@@ -176,5 +168,10 @@ cardNodes.add(CardFaceCreator.createFrontFace(card.getSuit(), card.getRank()));
   public boolean isDoubleAces()
   {
     return cards.get(0).isAce() && cards.get(1).isAce();
+  }
+
+  public int getNumCards()
+  {
+    return cards.size();
   }
 }

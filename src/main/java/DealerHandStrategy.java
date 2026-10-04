@@ -1,11 +1,10 @@
 public class DealerHandStrategy implements HandStrategy
-{  
-  public void play(Hand hand, Wager wager, ShoeMgr shoeMgr)
+{
+  public HandAction chooseAction(Hand hand, Wager wager)
   {
-    while (hand.getScore() <= 16)
-    {
-      Card card = shoeMgr.drawCard();
-      hand.addCard(card);
-    }
+    if (hand.getScore() <= 16)
+      return HandAction.HIT;
+
+    return HandAction.STAND;
   }
 }
