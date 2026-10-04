@@ -3,12 +3,13 @@
 
 entrypoint = "Main.java"
 hidden = ["**/*.class", "javafx-sdk-18.0.2"]
+modules = ["java-graalvm22.3", "nix"]
 
 [unitTest]
 language = "java"
 
 [nix]
-channel = "stable-22_11"
+channel = "stable-25_05"
 
 [debugger]
 support = true

@@ -280,7 +280,7 @@ public class Round
         case SPLIT:
         {
           wager.split(playerHand);
-          return "";
+          return;
         }
     
         case SURRENDER:
