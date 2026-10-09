@@ -1,53 +1,126 @@
 public class RoundResultAnalyzer
 {
-  public static String analyze(Hand playerHand, Hand dealerHand, Wager wager, IOutputter outputter)
+  public static RoundResultMessage analyze(Subround subround, Hand dealerHand, IOutputter outputter, GameSettings settings)
   {
-    String result = "";
-    if (playerHand.isBlackjack() && dealerHand.isBlackjack())
+    Hand playerHand = subround.getHand();
+    Wager wager = subround.getWager();
+
+    HandOutcome outcome =
+      HandOutcomeAnalyzer.analyze(
+          playerHand,
+          dealerHand,
+          subround.isNaturalBlackjack(),
+          wager.didSurrender()
+      );
+    
+    
+    String message;
+    MessageTone tone;
+      
+    switch (outcome)
     {
-      wager.push();
-      result = "Push\nRecouped " + wager.getFormattedPayout();
+      case BLACKJACK:
+      {
+        wager.blackjack(
+            settings.getBlackjackPayout()
+        );
+
+        message =
+            "BLACKJACK!\nYOU WON "
+            + wager.getFormattedPayout()
+            + "!";
+
+        tone =
+            MessageTone.POSITIVE;
+
+        break;
+      }
+
+      case WIN:
+      {
+        wager.win();
+
+        if (dealerHand.isBusted())
+        {
+          message =
+              "DEALER BUSTED!\nYOU WON "
+              + wager.getFormattedPayout()
+              + "!";
+        }
+        else
+        {
+          message =
+              "YOU WON "
+              + wager.getFormattedPayout()
+              + "!";
+        }
+
+        tone =
+            MessageTone.POSITIVE;
+
+        break;
+      }
+
+      case LOSS:
+      {
+        wager.lose();
+
+        if (dealerHand.isBlackjack())
+          message = "DEALER BLACKJACK!";
+        else if (playerHand.isBusted())
+          message = "BUSTED!";
+        else
+          message = "Dealer Wins";
+
+        tone =
+            MessageTone.NEGATIVE;
+
+        break;
+      }
+
+      case PUSH:
+      {
+        wager.push();
+
+        if (subround.isNaturalBlackjack()
+            && dealerHand.isBlackjack())
+        {
+          message =
+              "PUSH!\nRecouped "
+              + wager.getFormattedPayout();
+        }
+        else
+        {
+          message =
+              "Push\nRecouped "
+              + wager.getFormattedPayout();
+        }
+
+        tone =
+            MessageTone.NEUTRAL;
+
+        break;
+      }
+
+      case SURRENDER:
+      {
+        message =
+            "SURRENDERED!\nRecouped "
+            + wager.getFormattedPayout();
+
+        tone =
+            MessageTone.NEGATIVE;
+
+        break;
+      }
+
+      default:
+        throw new IllegalStateException(
+            "Unexpected outcome: "
+            + outcome
+        );
     }
-    else if (playerHand.isBlackjack())
-    {
-      wager.blackjack();
-      result = "BLACKJACK! YOU WON " + wager.getFormattedPayout() + "!";
-    }
-    else if (dealerHand.isBlackjack())
-    {
-      wager.lose();
-      result = "Dealer Blackjack!";
-    }
-    else if (wager.didSurrender())
-    {
-      result = "SURRENDERED!\nRecouped " + wager.getFormattedPayout();
-    }
-    else if (playerHand.isBusted())
-    {
-      wager.lose();
-      result = "Bust!";
-    }
-    else if (dealerHand.isBusted())
-    {
-      wager.win();
-      result = "YOU WON " + wager.getFormattedPayout() + "!";
-    }
-    else if (playerHand.getScore() > dealerHand.getScore())
-    {
-      wager.win();
-      result = "YOU WON " + wager.getFormattedPayout() + "!";
-    }
-    else if (playerHand.getScore() < dealerHand.getScore())
-    {
-      wager.lose();
-      result = "Dealer Wins";
-    }
-    else
-    {
-      wager.push();
-      result = "Push\nRecouped " + wager.getFormattedPayout();
-    }
-    outputter.output(result);
-    return result;
+    outputter.output(message);
+    return new RoundResultMessage(message, tone);
   }
 }

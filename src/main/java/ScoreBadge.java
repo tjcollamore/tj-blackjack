@@ -10,15 +10,13 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.effect.Effect;
-import javafx.scene.paint.Color;
-import javafx.animation.PauseTransition;
 
 public class ScoreBadge extends StackPane
 {
     private final Label label;
     private final Circle background;
     private final Label softIndicator;
+    private boolean showSoftIndicator = true;
     
     public ScoreBadge()
     {
@@ -62,7 +60,7 @@ public class ScoreBadge extends StackPane
     public void setScore(Hand hand)
     {
         setEffect(null);
-        softIndicator.setVisible(hand.isSoft());
+        softIndicator.setVisible(showSoftIndicator && hand.isSoft());
         
         if (hand.isBusted())
         {
@@ -76,6 +74,15 @@ public class ScoreBadge extends StackPane
             setText(String.valueOf(hand.getScore()), Color.DARKSLATEBLUE);
         }
         setVisible(true);
+    }
+
+
+    public void setShowSoftIndicator(boolean show)
+    {
+        showSoftIndicator = show;
+
+        if (!show)
+            softIndicator.setVisible(false);
     }
     
     public void setText(String text, Color bgColor)

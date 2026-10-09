@@ -40,14 +40,43 @@ public class CardFaceCreator
     return face; 
   }
 
-  // Back of Card: calling PNG
   public static Node createBackFace()
   {
     Image cardImage = new Image("/card_back4.png");
+
     ImageView cardView = new ImageView(cardImage);
     cardView.setFitWidth(CARD_WIDTH);
     cardView.setFitHeight(CARD_HEIGHT);
-    return cardView;
+    cardView.setPreserveRatio(false);
+    cardView.setSmooth(true);
+
+    Rectangle clip = new Rectangle(
+        CARD_WIDTH,
+        CARD_HEIGHT
+    );
+    clip.setArcWidth(CARD_ARC);
+    clip.setArcHeight(CARD_ARC);
+
+    cardView.setClip(clip);
+
+    Rectangle border = createShape(
+        CARD_WIDTH,
+        CARD_HEIGHT
+    );
+
+    border.setFill(Color.TRANSPARENT);
+
+    Pane face = new Pane(
+        cardView,
+        border
+    );
+
+    face.setPrefSize(
+        CARD_WIDTH,
+        CARD_HEIGHT
+    );
+
+    return face;
   }
   
   public static Rectangle createShape( double width, double height)

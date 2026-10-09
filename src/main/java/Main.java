@@ -16,19 +16,20 @@ public class Main extends Application
   @Override
   public void start(Stage primaryStage)
   {
-    BlackjackSceneCreator sceneCreator = new BlackjackSceneCreator();
+    GameSettings settings = new GameSettings();
+    BlackjackSceneCreator sceneCreator = new BlackjackSceneCreator(settings);
     Scene scene = sceneCreator.create();
 
     primaryStage.setTitle("TJ's Blackjack!");
     primaryStage.setScene(scene);
     primaryStage.show();
-    Platform.runLater(() -> startGame(primaryStage, sceneCreator));
+    Platform.runLater(() -> startGame(primaryStage, sceneCreator, settings));
   }
 
-  private void startGame(Stage stage, BlackjackSceneCreator sceneCreator)
+  private void startGame(Stage stage, BlackjackSceneCreator sceneCreator, GameSettings settings)
   {
     IOutputter outputter = new ConsoleOutputter();
-    ShoeMgr shoeMgr = new ShoeMgr(outputter, GameOptions.DECKS_IN_SHOE);
+    Shoe shoe = null;
     HandStrategy playerHandStrategy = new PlayerInteractiveHandStrategy(stage);
 
     Bankroll bankroll = new Bankroll(GameOptions.STARTING_BANKROLL, sceneCreator.getBankrollLabel(), outputter);
@@ -41,23 +42,34 @@ public class Main extends Application
 
       int maxBet = Math.min((int) bankroll.get(), GameOptions.TABLE_MAX_BET);
       wagerSelector.setMaxWager(maxBet);
-      
-      if (ChoiceDialog.show(stage, "",
-          null,               // no gear until settings works
-          wagerSelector, "DEAL", "COLOR UP")
-          .equals("COLOR UP"))
+
+      String choice = ChoiceDialog.show(stage,
+          sceneCreator.getGearIcon(),
+          wagerSelector, "DEAL", "COLOR UP");
+
+      if (choice.equals("COLOR UP"))
         break;
 
       int betAmount = wagerSelector.getWager();
       
       sceneCreator.getDealerScoreBadge().setVisible(false);
       sceneCreator.getPlayerScoreBadge().setVisible(false);
-        
-      Round round = new Round(stage, sceneCreator, outputter, shoeMgr, playerHandStrategy, betAmount, bankroll);
+
+      if (shoe == null)
+      {
+        shoe = new Shoe(settings.getDecksInShoe());
+      }
+      
+      Round round = new Round(stage, sceneCreator, outputter, shoe, playerHandStrategy, betAmount, bankroll, settings);
       round.play();
      
       outputter.output("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-      shoeMgr.checkCutCard();
+      if (shoe.needsShuffle())
+      {
+        outputter.output("Cut card reached. Shuffling new shoe...");
+        shoe.shuffle();
+        ChoiceDialog.showGameMessage(stage, "SHUFFLING NEW " + shoe.getDeckCount() + "-DECK SHOE", MessageTone.DEFAULT);
+      }
     }
 
     Platform.exit();

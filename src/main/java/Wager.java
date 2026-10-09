@@ -2,19 +2,14 @@ public class Wager
 {
   private int betAmount;
   private double payout;
-  private boolean didDoubleDown = false;
   private Bankroll bankroll;
-  private IOutputter outputter;
   private boolean didSurrender = false;
-  private boolean didSplit = false;
-  private boolean didSplitAces = false;
 
-  public Wager(Bankroll bankroll, int betAmount, IOutputter outputter)
+  public Wager(Bankroll bankroll, int betAmount)
   {
     this.betAmount = betAmount;
     this.payout = 0.0;
     this.bankroll = bankroll;
-    this.outputter = outputter;
   }
   
   public void place()
@@ -37,9 +32,9 @@ public class Wager
     bankroll.deposit(payout);
   }
   
-  public void blackjack()
+  public void blackjack(GameSettings.BlackjackPayout blackjackPayout)
   {
-    payout = betAmount * GameOptions.BLACKJACK_PAYOUT;
+    payout = betAmount * blackjackPayout.getTotalReturnMultiplier();
     bankroll.deposit(payout);
   }
 
@@ -55,44 +50,12 @@ public class Wager
     return didSurrender;
   }
 
-  public void split(Hand playerHand)
-  {
-    didSplit = true;
-    if (playerHand.isDoubleAces())
-      didSplitAces = true;
-    bankroll.deduct(betAmount);
-  }
-
-  public boolean didSplitAces()
-  {
-    return didSplitAces;
-  }
-  
-  public boolean didSplit()
-  {
-    return didSplit;
-  }
-
-  public void reset()
-  {
-    didSplit = false;
-    didDoubleDown = false;
-    didSurrender = false;
-    payout = 0.0;
-  }
-
   public void doubleDown()
   {
     bankroll.deduct(betAmount);
     betAmount *= 2;
-    didDoubleDown = true;
   }
 
-  public boolean didDoubleDown()
-  {
-    return didDoubleDown;
-  }
-  
   public int getBetAmount()
   {
     return betAmount;
@@ -108,7 +71,7 @@ public class Wager
     return bankroll.getFormattedCurrency(getPayout());
   }
 
-  public boolean canDoubleOrSplit()
+  public boolean hasFundsToDoubleOrSplit()
   {
     return bankroll.get() >= getBetAmount();
   }

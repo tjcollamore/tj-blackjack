@@ -1,3 +1,4 @@
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -20,19 +21,55 @@ import javafx.util.Duration;
 public class ChoiceDialog {
 
     private static final double ACTION_BAR_HEIGHT = 57;
-    
+
     public static String show(
         Stage ownerStage,
-        String message,
         String... options)
     {
-        return show(ownerStage, message, null, null, options);
+        return show(ownerStage, "", MessageTone.DEFAULT, null, null, null, options);
     }
 
     public static String show(
         Stage ownerStage,
         String message,
+        MessageTone messageTone,
+        String... options)
+    {
+        return show(ownerStage, message, messageTone, null, null, null, options);
+    }
+
+    public static String show(
+        Stage ownerStage,
         Node leftAccessory,  // settings icon
+        Node leadingContent, // generic content for wager selection
+        String... options) 
+    {
+        return show(ownerStage, "", MessageTone.DEFAULT, null, leftAccessory, leadingContent, options);
+}
+
+    public static String showWithHighlightedOption(
+        Stage ownerStage,
+        Node leftAccessory,
+        String highlightedOption,
+        String... options)
+    {
+      return show(
+          ownerStage,
+          "",
+          MessageTone.DEFAULT,
+          highlightedOption,
+          leftAccessory,
+          null,
+          options
+      );
+    }
+    
+    public static String show(
+        Stage ownerStage,
+        String message,
+        MessageTone messageTone,
+        String highlightedOption,
+        Node leftAccessory,  // settings icon / help button
         Node leadingContent, // generic content for wager selection
         String... options) 
     {
@@ -58,24 +95,60 @@ public class ChoiceDialog {
 
 
         // The actual game controls stay centered as one unit
-        HBox actionControls = new HBox(10);
+        HBox actionControls = new HBox(8);
         actionControls.setAlignment(Pos.CENTER);
 
-        buttonBar.getChildren().add(actionControls);
-        StackPane.setAlignment(actionControls, Pos.CENTER);
+        HBox fullBar = new HBox();
+        fullBar.setAlignment(Pos.CENTER);
+        fullBar.setMaxWidth(Double.MAX_VALUE);
 
+        Region leftSpacer = new Region();
+        Region rightSpacer = new Region();
 
-        // Optional far-left accessory, such as the settings gear
-        if (leftAccessory != null) {
-            buttonBar.getChildren().add(leftAccessory);
+        leftSpacer.setPrefWidth(36);
+        rightSpacer.setPrefWidth(36);
 
-            StackPane.setAlignment(leftAccessory, Pos.CENTER_LEFT);
-            StackPane.setMargin(
-                leftAccessory,
-                new Insets(0, 0, 0, 16)
+        if (leftAccessory != null)
+        {
+            StackPane accessoryHolder =
+                new StackPane(leftAccessory);
+
+            accessoryHolder.setPrefWidth(42);
+            accessoryHolder.setMinWidth(42);
+            accessoryHolder.setMaxWidth(42);
+            accessoryHolder.setAlignment(Pos.CENTER);
+            
+            fullBar.getChildren().add(
+                accessoryHolder
+            );
+        }
+        else
+        {
+            fullBar.getChildren().add(
+                leftSpacer
             );
         }
 
+        HBox.setHgrow(
+            actionControls,
+            Priority.ALWAYS
+        );
+
+        actionControls.setAlignment(
+            Pos.CENTER
+        );
+
+        fullBar.getChildren().add(
+            actionControls
+        );
+
+        fullBar.getChildren().add(
+            rightSpacer
+        );
+
+        buttonBar.getChildren().add(
+            fullBar
+        );
 
         // Optional content immediately before the choice buttons,
         // such as the wager selector
@@ -88,30 +161,57 @@ public class ChoiceDialog {
         if (message != null && !message.isBlank())
         {
             persistentMessageBox =
-                showPersistentGameMessage(ownerStage, message);
+                showPersistentGameMessage(ownerStage, message, messageTone);
         }
 
         
-        for (int i = 0; i < options.length; i++) 
+        for (int i = 0; i < options.length; i++)
         {
             String originalLabel = options[i];
-            String label = originalLabel;
 
-            Button btn = new Button(label);
+            Button btn = new Button(originalLabel);
             btn.setPrefWidth(100);
-            String baseColor = (i == 0) ? "#007bff" : "#6c757d";  // Make first button primary
-            String focusColor = (i == 0) ? "#339af0" : "#868e96";
-            applyButtonStyles(btn, baseColor, focusColor);
 
-            final String finalLabel = originalLabel; // Ensure final variable for lambda
-            btn.setOnAction(e -> {
+            boolean isPrimary;
+
+            if (highlightedOption != null)
+            {
+                isPrimary =
+                    originalLabel.equals(highlightedOption);
+            }
+            else
+            {
+                // Preserve old behavior:
+                // first button is blue.
+                isPrimary = (i == 0);
+            }
+
+            String baseColor =
+                isPrimary ? "#007bff" : "#6c757d";
+
+            String focusColor =
+                isPrimary ? "#339af0" : "#868e96";
+
+            applyButtonStyles(
+                btn,
+                baseColor,
+                focusColor
+            );
+
+            final String finalLabel = originalLabel;
+
+            btn.setOnAction(e ->
+            {
                 result[0] = finalLabel;
-                ((Stage) buttonBar.getScene().getWindow()).close();
+
+                ((Stage) buttonBar
+                    .getScene()
+                    .getWindow())
+                    .close();
             });
 
             actionControls.getChildren().add(btn);
         }
-
         // Outer wrapper to dock to bottom only
         VBox root = new VBox();
         root.setAlignment(Pos.BOTTOM_CENTER);
@@ -139,11 +239,27 @@ public class ChoiceDialog {
         // Correct the position once JavaFX/OS has actually created the window.
         // This is especially important for the very first action bar.
         dialogStage.setOnShown(e ->
-            positionActionBar(dialogStage, ownerStage)
+            Platform.runLater(() ->
+                positionActionBar(dialogStage, ownerStage)
+            )
         );
-
+        
         dialogStage.showAndWait();
 
+        if (result[0] == null
+            && leftAccessory
+                instanceof DecisionHelpButton helpButton)
+        {
+          HandAction acceptedAction =
+              helpButton.getAcceptedAction();
+
+          if (acceptedAction != null)
+          {
+            result[0] =
+                acceptedAction.getDisplayText();
+          }
+        }
+        
         if (persistentMessageBox != null)
         {
            StackPane gameRoot =
@@ -154,11 +270,13 @@ public class ChoiceDialog {
         return result[0];
     }
 
+   
     private static StackPane showPersistentGameMessage(
         Stage ownerStage,
-        String message)
+        String message,
+        MessageTone messageTone)
     {
-        Color accent = getMessageAccent(message);
+        Color accent = getMessageAccent(messageTone);
 
         Label messageLabel = new Label(message);
         messageLabel.setWrapText(true);
@@ -223,8 +341,8 @@ public class ChoiceDialog {
     }
     
     
-    public static void showGameMessage(Stage ownerStage, String message) {
-        Color accent = getMessageAccent(message);
+    public static void showGameMessage(Stage ownerStage, String message, MessageTone messageTone) {
+        Color accent = getMessageAccent(messageTone);
 
         Label messageLabel = new Label(message);
         messageLabel.setWrapText(true);
@@ -300,29 +418,6 @@ public class ChoiceDialog {
         animation.play();
     }
     
-    private static Color getMessageAccent(String message) {
-        String lower = message.toLowerCase();
-
-        if (lower.contains("blackjack")
-                || lower.contains("win")
-                || lower.contains("won")) {
-            return Color.web("#FFD700"); // gold
-        }
-
-        if (lower.contains("bust")
-                || lower.contains("lost")
-                || lower.contains("lose")) {
-            return Color.web("#A52A2A"); // dark casino red
-        }
-
-        if (lower.contains("push")
-                || lower.contains("tie")) {
-            return Color.web("#C0C0C0"); // silver
-        }
-
-        return Color.web("#D4AF37"); // antique gold
-    }
-
     private static void positionActionBar(
         Stage dialogStage,
         Stage ownerStage)
@@ -362,5 +457,16 @@ public class ChoiceDialog {
                 -fx-border-radius: 4px;
             """, color, isNowFocused ? "#66b2ff" : "transparent"));
         });
+    }
+
+    private static Color getMessageAccent(MessageTone tone)
+    {
+        return switch (tone)
+        {
+            case POSITIVE -> Color.web("#FFD700");
+            case NEGATIVE -> Color.web("#A52A2A");
+            case NEUTRAL  -> Color.web("#C0C0C0");
+            case DEFAULT  -> Color.web("#D4AF37");
+        };
     }
 }

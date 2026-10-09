@@ -1,50 +1,79 @@
+import java.util.ArrayList;
+import java.util.List;
 import javafx.stage.Stage;
 
 public class PlayerInteractiveHandStrategy implements HandStrategy
 {
   private Stage stage;
-
+  private final HandStrategy coachingStrategy = new BasicStrategy();
+  
   public PlayerInteractiveHandStrategy(Stage stage)
   {
     this.stage = stage;
   }
   
-  public HandAction chooseAction(Hand hand, Wager wager)
-  { 
-    String choice;
+  @Override
+  public HandAction chooseAction(
+      PlayerDecisionContext context)
+  {
+    List<String> options = new ArrayList<>();
 
-    // Double, Split, and Surrender are only offered with the initial hand
-    if (hand.getNumCards() == 2)
+    addIfAvailable(options, context, HandAction.STAND);
+    addIfAvailable(options, context, HandAction.HIT);
+    addIfAvailable(options, context, HandAction.DOUBLE);
+    addIfAvailable(options, context, HandAction.SPLIT);
+    addIfAvailable(options, context, HandAction.SURRENDER);
+
+    String highlightedOption = null;
+
+    if (context.getSettings().coachingEnabled()
+        && context.getDeckCount() >= 6)
     {
-      if (wager.canDoubleOrSplit())
-      {
-        if (hand.isSplittable())
-          choice = ChoiceDialog.show(stage, "", 
-                                     HandAction.STAND.getDisplayText(), 
-                                     HandAction.HIT.getDisplayText(), 
-                                     HandAction.DOUBLE.getDisplayText(), 
-                                     HandAction.SPLIT.getDisplayText(), 
-                                     HandAction.SURRENDER.getDisplayText()); 
-        else
-          choice = ChoiceDialog.show(stage, "", 
-                                     HandAction.STAND.getDisplayText(), 
-                                     HandAction.HIT.getDisplayText(), 
-                                     HandAction.DOUBLE.getDisplayText(), 
-                                     HandAction.SURRENDER.getDisplayText()); 
-      }
-      else
-        choice = ChoiceDialog.show(stage, "", 
-                                   HandAction.STAND.getDisplayText(), 
-                                   HandAction.HIT.getDisplayText(), 
-                                   HandAction.SURRENDER.getDisplayText()); 
+      HandAction recommendation =
+          coachingStrategy.chooseAction(context);
+
+      highlightedOption =
+          recommendation.getDisplayText();
+    }
+
+    boolean showDecisionHelp = context.getPlayerHand().getNumCards() == 2;
+    DecisionHelpButton helpButton = null;
+    if (showDecisionHelp)
+    {
+        helpButton = new DecisionHelpButton(stage, context);
+    }
+          
+    String choice;
+    if (highlightedOption != null)
+    {
+      choice =
+          ChoiceDialog.showWithHighlightedOption(
+              stage,
+              helpButton,
+              highlightedOption,
+              options.toArray(new String[0])
+          );
     }
     else
     {
-      choice = ChoiceDialog.show(stage, "", 
-                                  HandAction.STAND.getDisplayText(), 
-                                  HandAction.HIT.getDisplayText());
+      choice =
+          ChoiceDialog.show(
+              stage,
+              helpButton,
+              null,
+              options.toArray(new String[0])
+          );
     }
-  
+
     return HandAction.fromDisplayText(choice);
+  }
+
+  private void addIfAvailable(
+    List<String> options,
+    PlayerDecisionContext context,
+    HandAction action)
+  {
+    if (context.isAvailable(action))
+      options.add(action.getDisplayText());
   }
 }

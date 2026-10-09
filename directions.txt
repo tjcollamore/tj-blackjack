@@ -535,7 +535,7 @@ Also, update isBlackjack() to call is21() rather than also checking for "getScor
 61c. Instantiate the Wager object in main's startGame(), at the beginning of the do..while loop, specifying a betAmount of TABLE_MIN_BET.
 61d. Create a GameOption called BLACKJACK_PAYOUT and set to 2.2 (6:5) or 2.5 (3:2).
 61e. Add the following public void methods to Wager: win(), lose(), push(), blackjack(), and surrender(). Update payout in each of these methods according to these rules: A loss returns 0; a win returns 30 (wager*2); a tie (aka push) returns 15 (wager); a surrender returns 7.5 (wager/2); a natural blackjack returns 37.5 (wager+wager*1.5 or wager*2.5) for a 3:2 payout or 33 (wager+wager*1.2 or wager*2.2) for a 6:5 payout.
-61f. Pass Wager into the Round and further into RoundResultCreator.
+61f. Pass Wager into the Round and further into RoundResultMessageCreator.
 61g. Rename RoundResultMessageCreator (file and class) to RoundResultAnalyzer, and rename describeResult to analyze.
 61h. Call the appropriate wager method in that class.
 61i. At the end of analyze(), append "\nYour payout is: " + wager.getPayout()" to result.
@@ -791,7 +791,7 @@ playerHands[nextFreeSlot(playerHands)] = newPlayerHand;
 
 87. Both doubling and splitting must be blocked if the bankroll is insufficient.
 87a. Add a method to wager "public boolean canDoubleOrSplit".
-87b. The implementation is "return bankroll.getBankroll() > getBetAmount()""
+87b. The implementation is "return bankroll.getBankroll() >= getBetAmount()""
 87c. In PlayerInteractiveStrategy, if canDoubleOrSplit is false, make yet another ChoiceDialog.show, allowing just Stand, Hit, or Surrender.
 
 88. Splitting Aces is another unique game play. (1) You only get 1 card and (2) you may not split again.
@@ -843,11 +843,863 @@ playerStack.getChildren().add(playerScoreBadge);
 92i. Update displayCard. There's no longer any need to remove the scoreBadge from the cardNodes - it's not in there anymore.
 92j. Inside ScoreBadge's setScore method, call setVisible(true) at the end of the method.
 92k. Update the beginning of the constructor of ScoreBadge to include setVisible(false);
-92l. In Main, where we clear the cards and the beginning of the do loop, we now need to also setvisible(false) on the dealer and player score badges.
+92l. We also need to clear the soft indicator field. Change
+if (hand.isSoft())
+  softIndicator.setVisible(true);
+to
+softIndicator.setVisible(hand.isSoft());
+92m. We also need to clear the blackjack effect in case it was present from the previous round. [Note/TODO: these instructions have no prior mention of this effect, so ignore as appropriate]. Add this to the beginning of setScore() as well:
+setEffect(null);
+
+92n. In Main, where we clear the cards and the beginning of the do loop, we now need to also setvisible(false) on the dealer and player score badges.
 
 
 
 
+93. A modern app avoids modal dialog boxes. Let's refactor ChoiceDialog to be a non-modal action bar at the bottom of the window. If/when a message is passed in, it temporarily shows it for ~1.8 seconds in the middle of the dialog. Use AI to generate this, or take the answer.
+93a. In Round.java, remove the extraneous question being passed into RoundResultAnalyzer.
+93b. In PlayerInteractiveHandStrategy.java, remove "What do you want to do?".
+
+94. We can simplify the user experience by moving the wage selection into the action bar, rather than by having a separate modal dialog.
+94a. With AI, create a WagerSelector.java class. For now, the constructor can just take initialWager. We'll enable max/min's later. Hard-code a step of 5. The UI layout can be a Label saying "WAGER" and a - button and a + button under it, with the wager amount shown between the +/- buttons. Style the buttons as follows so that it doesn't look like actual buttons:
+private void styleAdjustmentButton(Button button)
+    {
+        button.setStyle("""
+            -fx-background-color: transparent;
+            -fx-text-fill: white;
+            -fx-font-size: 18px;
+            -fx-font-weight: bold;
+            -fx-padding: 1px 4px 1px 4px;
+            -fx-cursor: hand;
+        """);
+
+        button.setFocusTraversable(false);
+    }
+94b. With AI, wire WagerSelector into ChoiceDialog. When completed, it's visible and adjustable within the actionbar; however, the BetDialog still appears and is wired to the business logic. Next we can wire the new UI to the game.
+94c. In Wager, replace determineBetAmount() with the method: public void place() { bankroll.deduct(betAmount); }
+94d. In Round play(), replace the call to determineBetAmount with a call to place(). (We do not consolidate place into the constructor because constructors should set state only.)
+94e. Refactor main to be a while(true) with a break rather than a do...while. It should look something like this:
+private void startGame(Stage stage, BlackjackSceneCreator sceneCreator)
+{
+  IOutputter outputter = new ConsoleOutputter();
+  ShoeMgr shoeMgr = new ShoeMgr(outputter, GameOptions.DECKS_IN_SHOE);
+  HandStrategy playerHandStrategy = new PlayerInteractiveHandStrategy(stage);
+
+  Bankroll bankroll = new Bankroll(GameOptions.STARTING_BANKROLL, sceneCreator.getBankrollLabel(), outputter);
+
+  WagerSelector wagerSelector = new WagerSelector(GameOptions.TABLE_MIN_BET);
+  String resultMessage = null;
+
+  while(true)
+  {      
+    bankroll.addFundsIfBroke(stage, GameOptions.STARTING_BANKROLL, GameOptions.TABLE_MIN_BET);
+
+    if (ChoiceDialog.show(stage, resultMessage,
+        null,               // no gear until settings works
+        wagerSelector, "DEAL", "COLOR UP")
+        .equals("COLOR UP"))
+      break;
+
+    int betAmount = wagerSelector.getWager();
+
+    sceneCreator.getDealerCards().clear();
+    sceneCreator.getPlayerCards().clear();
+    sceneCreator.getDealerScoreBadge().setVisible(false);
+    sceneCreator.getPlayerScoreBadge().setVisible(false);
+    sceneCreator.getSubroundBadge().update(1, 1);
+
+    Round round = new Round(stage, sceneCreator, outputter, shoeMgr, playerHandStrategy, betAmount, bankroll);
+    resultMessage = round.play();
+
+    outputter.output("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+    shoeMgr.checkCutCard();
+  }
+
+  Platform.exit();
+}    
+94f. Round's getLastBetAmount is now dead code. Remove it. The last bet amount is preserved in the WagerSelector widget.
+
+95. Let's re-wire max/min bets, this time within WagerSelector.
+95a. Add minWager and maxWager private fields.
+95b. Make the + and - buttons private fields as well.
+95c. Add minWager and maxWager to the constructor and add these lines:
+public WagerSelector(int minWager, int maxWager)
+{
+    this.minWager = minWager;
+    this.maxWager = normalizeMax(maxWager);
+    this.wager = minWager;
+    ...
+95d. Implement normalizeMax:
+private int normalizeMax(int maxWager)
+{
+    return maxWager - (maxWager % STEP);
+}
+
+95e. Add setMaxWager and updateDisplay
+public void setMaxWager(int maxWager)
+{
+    this.maxWager = normalizeMax(maxWager);
+
+    if (wager > this.maxWager)
+        wager = this.maxWager;
+
+    updateDisplay();
+}
+private void updateDisplay()
+{
+    updateAmountLabel();
+    minusButton.setDisable(wager <= minWager);
+    plusButton.setDisable(wager >= maxWager);
+}
+95f. Update Main to pass in GameOptions.TABLE_MIN_BET and TABLE_MAX_BET.
+95g. Delete BetDialog once it's safely not used and not needed.
+
+96. Use AI such that when you hold the + or - buttons down, it changes the wager rapid-fire.
+
+97. Right now, the Hand class has 2 responsibilities: it represents a hand (and it's management), and it decides when to draw cads from the shoe. Multiple responsibilities is less than ideal. In this case, it causes problems with (1) fixing the splitting logic (whereby the dealer cards are shown after the first subround), (2) introducing animations for cards entering the game (ie the order is technically wrong), and (3) the splitting logic is awkward whereby it removes cards from a hand and then re-adds them and moves things around. Let's refactor this.
+97a. Have Hand create an empty hand. Remove ShoeMgr from the constructor and don't draw the 2 cards.
+97b. In Round, remove shoeMgr from the 2 instantiations of Hand
+97c. Immediately after instantiating the now-empty hands, draw cards in the correct real-world order (to facilitate future animations):
+playerHands[0].addCard(shoeMgr.drawCard());
+dealerHand.addCard(shoeMgr.drawCard());
+playerHands[0].addCard(shoeMgr.drawCard());
+dealerHand.addCard(shoeMgr.drawCard());
+97d. Similarly, in the same method, after wager.didSplit(), remove shoeMgr and explicitly add two cards immediately afterward.
+
+98. Next we can refactor the split logic a little bit. We'll make sure cards are drawn in the order that correctly maps to the real world. This will help when we're ready to animate.
+98a. Remove the addCardToFront method from Hand.
+98b. Refactor the wager.didSplit() to look like this:
+  if (wager.didSplit())
+  {
+    Hand newPlayerHand = new Hand(outputter, false, sceneCreator.getPlayerCards(), false, sceneCreator.getPlayerScoreBadge());
+
+    int nextFreeSlot = nextFreeSlot(playerHands);
+    playerHands[nextFreeSlot] = newPlayerHand;
+
+    if (nextFreeSlot == lastSlot(playerHands))
+      blockSplitting(playerHands);
+
+    // Move the second card from the original hand into the new split hand
+    Card splitCard = playerHands[i].removeCard(1);
+    newPlayerHand.addCard(splitCard);
+
+    // Give each split hand 1 new card.
+    playerHands[i].addCard(shoeMgr.drawCard());
+    newPlayerHand.addCard(shoeMgr.drawCard());
+
+    wager.reset();
+    i--;
+  }
+
+99. Another refactor to future-proof... in the future we'll want different Player strategies, like PlayerBasicStrategy (always play "correctly"), or PlayerAlwaysSplitStrategy (to compare it's statistical effectiveness with other strategies). To that end, we don't want the HandStrategy's "physically" drawing cards (ie mucking up animations). Instead, it will just tell us what to do in the current situation, without actually doing it.
+99a. Introduce HandAction.java
+public enum HandAction
+{
+  HIT,
+  STAND,
+  DOUBLE,
+  SPLIT,
+  SURRENDER
+}
+99b. Change the HandStrategy interface from
+  public void play(Hand hand, Wager wager, ShoeMgr shoeMgr);
+to
+  HandAction chooseAction(Hand hand, Wager wager);
+  Notice shoeMgr disappeared.
+99c. Add this method to Hand. We'll need it to preserve game play behavior.
+public int getNumCards()
+{
+  return cards.size();
+}
+99d. Change PlayerInteractiveHandStrategy do not actually do anything except say what to do:
+  public void play(Hand hand, Wager wager)
+  { 
+    String choice;
+
+    // Double, Split, and Surrender are only offered with the initial hand
+    if (hand.getNumCards() == 2)
+    {
+      if (wager.canDoubleOrSplit())
+      {
+        if (hand.isSplittable())
+          choice = ChoiceDialog.show(stage, "", "Stand", "Hit", "Double", "Split", "⚑"); //🏳(U+1F3F3)
+        else
+          choice = ChoiceDialog.show(stage, "", "Stand", "Hit", "Double", "⚑");
+      }
+      else
+        choice = ChoiceDialog.show(stage, "", "Stand", "Hit", "⚑");
+    }
+    else
+    {
+      choice = ChoiceDialog.show(stage, "", "Stand", "Hit");
+    }
+
+    if (choice.equals("Hit"))
+      return HandAction.HIT;
+
+    if (choice.equals("Double"))
+      return HandAction.DOUBLE;
+
+    if (choice.equals("Split"))
+      return HandAction.SPLIT;
+
+    if (choice.equals("⚑"))
+      return HandAction.SURRENDER;
+
+    return HandAction.STAND;   
+  }
+99e. DealerHandStrategy becomes:
+public class DealerHandStrategy implements HandStrategy
+{
+  public HandAction chooseAction(Hand hand, Wager wager)
+  {
+    if (hand.getScore() <= 16)
+      return HandAction.HIT;
+
+    return HandAction.STAND;
+  }
+}
+99f. In Round, dealerHandStrategy logic looks like:
+while (dealerHandStrategy.chooseAction(dealerHand, wager) == HandAction.HIT)
+{
+  Card card = shoeMgr.drawCard();
+  dealerHand.addCard(card);
+}
+
+99g. Replace the entire playSubround method in Round to do the actual work based on the instructions given to it by the strategies. After this, only Round draws cards, and it does so in a way that mimics the real game.
+public String playSubRound(
+    Hand playerHand,
+    Hand dealerHand,
+    Wager wager)
+{
+  if (dealerHand.isBlackjack())
+    dealerHand.showDealerHoleCard();
+
+  if (!playerHand.isBlackjack() && !dealerHand.isBlackjack())
+  {
+    if (!wager.didSplitAces())
+    {
+      boolean playerFinished = false;
+
+      while (!playerFinished)
+      {
+        HandAction action =
+            playerHandStrategy.chooseAction(playerHand, wager);
+
+        switch (action)
+        {
+          case HIT:
+          {
+            Card card = shoeMgr.drawCard();
+            playerHand.addCard(card);
+
+            if (playerHand.isBusted() || playerHand.is21())
+              playerFinished = true;
+
+            break;
+          }
+
+          case STAND:
+          {
+            playerFinished = true;
+            break;
+          }
+
+          case DOUBLE:
+          {
+            wager.doubleDown();
+
+            Card card = shoeMgr.drawCard();
+            playerHand.addCard(card);
+
+            // Double always ends the player's turn.
+            playerFinished = true;
+            break;
+          }
+
+          case SPLIT:
+          {
+            wager.split(playerHand);
+
+            // Round.play() will actually create and
+            // distribute the split hands.
+            return "";
+          }
+
+          case SURRENDER:
+          {
+            wager.surrender();
+            playerFinished = true;
+            break;
+          }
+        }
+      }
+    }
+
+    outputter.output("Your score is: " + playerHand.getScore());
+
+    if (!playerHand.isBusted() && !wager.didSurrender())
+    {
+      DealerHandStrategy dealerHandStrategy =
+          new DealerHandStrategy();
+
+      dealerHand.showDealerHoleCard();
+
+      while (dealerHandStrategy.shouldHit(dealerHand))
+      {
+        Card card = shoeMgr.drawCard();
+        dealerHand.addCard(card);
+      }
+
+      outputter.output(
+          "Dealer score is: " + dealerHand.getScore());
+    }
+  }
+
+  return RoundResultAnalyzer.analyze(
+      playerHand,
+      dealerHand,
+      wager,
+      outputter);
+}
+
+100. We can go deeper in the usage of the HandStrategy enum to reduce dependency on hard-coded strings. ChoiceDialog is super-generic so it will stay as strings.
+100a. Associate the string with the enum action:
+public enum HandAction
+{
+  HIT("Hit"),
+  STAND("Stand"),
+  DOUBLE("Double"),
+  SPLIT("Split"),
+  SURRENDER("⚑");
+
+  private String displayText;
+
+  HandAction(String displayText)
+  {
+    this.displayText = displayText;
+  }
+
+  public String getDisplayText()
+  {
+    return displayText;
+  }
+
+  public static HandAction fromDisplayText(String text)
+  {
+    for (HandAction action : values())
+    {
+      if (action.getDisplayText().equals(text))
+        return action;
+    }
+
+    throw new IllegalArgumentException(
+        "Unknown hand action: " + text);
+  }
+}
+
+100b. In PlayerInteractiveHandStrategy, we can replace this:
+if (choice.equals("Hit"))
+  return HandAction.HIT;
+
+if (choice.equals("Double"))
+  return HandAction.DOUBLE;
+
+if (choice.equals("Split"))
+  return HandAction.SPLIT;
+
+if (choice.equals("⚑"))
+  return HandAction.SURRENDER;
+
+return HandAction.STAND;   
+
+with
+return HandAction.fromDisplayText(choice);
+
+100c. In the same class, replace the hardcoded strings in the calls to ChoiceDialog.show with things like HandAction.STAND.getDisplayText().
+
+101. We are getting close for basic animations. The game loop is still synchronous. JavaFX animations are asynchronous, so we need a way to let the animation run while Round waits for it to finish. In Main, change
+startGame(primaryStage, sceneCreator);
+to 
+Platform.runLater(() -> startGame(primaryStage, sceneCreator));
+
+102. Another refactoring to help us flip a card in-place. Currently, a Card is either a CardFace (front) or an ImageView (back), but not both. This makes it awkward to flip a card.
+102a. Add a new CardView class that encapsulates this.
+import javafx.scene.layout.StackPane;
+
+public class CardView extends StackPane
+{
+  public CardView()
+  {
+    setPrefSize(
+        CardFaceCreator.CARD_WIDTH,
+        CardFaceCreator.CARD_HEIGHT
+    );
+  }
+
+  public void showBack()
+  {
+    getChildren().setAll(
+        CardFaceCreator.createBackFace()
+    );
+  }
+
+  public void showFront(Card card)
+  {
+    getChildren().setAll(
+        CardFaceCreator.createFrontFace(
+            card.getSuit(),
+            card.getRank()
+        )
+    );
+  }
+}
+
+102b. Have Hand use CardView. In showDealerHoleCard, replace the cardNodes.set call with:
+CardView cardView = (CardView) cardNodes.get(1);
+cardView.showFront(cards.get(1));
+102c. Re-write displayCard as:
+private void displayCard(Card card)
+{
+  CardView cardView = new CardView();
+
+  if (isDealer && cards.size() == 2)
+  {
+    cardView.showBack();
+
+    cardNodes.add(cardView);
+
+    outputter.output(
+        "Dealer drawn card: <Face Down>"
+    );
+  }
+  else
+  {
+    cardView.showFront(card);
+
+    cardNodes.add(cardView);
+
+    if (isDealer)
+      outputter.output(
+          "Dealer drawn card: " + card
+      );
+    else
+      outputter.output(
+          "Your drawn card: " + card
+      );
+
+    showScoreBadge();
+  }
+}
+
+103. Let's expose the Shoe location. We'll use that to know where the card will animate from.
+103a. In BlackjackSceneCreator, make shoeOverlay a member variable rather than a local variable.
+103b. Add an accessor.
+public Node getShoeAnchor()
+{
+  return shoeOverlay;
+}
+
+104. Time for card animation.
+104a. Create a TableAnimator class.
+import javafx.animation.Interpolator;
+import javafx.animation.PauseTransition;
+import javafx.animation.ScaleTransition;
+import javafx.animation.SequentialTransition;
+import javafx.animation.TranslateTransition;
+import javafx.geometry.Bounds;
+import javafx.scene.Node;
+import javafx.util.Duration;
+
+public class TableAnimator
+{
+  private static final Duration DEAL_DURATION =
+      Duration.millis(260);
+
+  private static final Duration FLIP_HALF_DURATION =
+      Duration.millis(90);
+
+  private static final Duration BETWEEN_CARDS =
+      Duration.millis(80);
+
+  private BlackjackSceneCreator sceneCreator;
+
+  public TableAnimator(BlackjackSceneCreator sceneCreator)
+  {
+    this.sceneCreator = sceneCreator;
+  }
+
+  public void dealCard(Card card, CardView cardView, boolean leaveFaceDown)
+  {
+    Node shoeAnchor = sceneCreator.getShoeAnchor();
+
+    // The CardView must already be in the scene graph so that
+    // JavaFX knows its final position.
+    cardView.applyCss();
+    cardView.layout();
+
+    Bounds shoeBounds =
+        shoeAnchor.localToScene(
+            shoeAnchor.getBoundsInLocal()
+        );
+
+    Bounds cardBounds =
+        cardView.localToScene(
+            cardView.getBoundsInLocal()
+        );
+
+    double shoeX = shoeBounds.getCenterX();
+    double shoeY = shoeBounds.getCenterY();
+
+    double cardX = cardBounds.getCenterX();
+    double cardY = cardBounds.getCenterY();
+
+    // Start visually at the shoe.
+    cardView.setTranslateX(shoeX - cardX);
+    cardView.setTranslateY(shoeY - cardY);
+
+    cardView.showBack();
+
+    TranslateTransition deal =
+        new TranslateTransition(
+            DEAL_DURATION,
+            cardView
+        );
+
+    deal.setToX(0);
+    deal.setToY(0);
+    deal.setInterpolator(Interpolator.EASE_OUT);
+
+    if (leaveFaceDown)
+    {
+      SequentialTransition sequence =
+          new SequentialTransition(
+              deal,
+              new PauseTransition(BETWEEN_CARDS)
+          );
+
+      playAndWait(sequence);
+    }
+    else
+    {
+      ScaleTransition flipClose =
+          new ScaleTransition(
+              FLIP_HALF_DURATION,
+              cardView
+          );
+
+      flipClose.setFromX(1.0);
+      flipClose.setToX(0.0);
+
+      flipClose.setOnFinished(e ->
+          cardView.showFront(card)
+      );
+
+      ScaleTransition flipOpen =
+          new ScaleTransition(
+              FLIP_HALF_DURATION,
+              cardView
+          );
+
+      flipOpen.setFromX(0.0);
+      flipOpen.setToX(1.0);
+
+      SequentialTransition sequence =
+          new SequentialTransition(
+              deal,
+              flipClose,
+              flipOpen,
+              new PauseTransition(BETWEEN_CARDS)
+          );
+
+      playAndWait(sequence);
+    }
+  }
+
+  private void playAndWait(SequentialTransition animation)
+  {
+    Object key = new Object();
+
+    animation.setOnFinished(e ->
+        javafx.application.Platform.exitNestedEventLoop(
+            key,
+            null
+        )
+    );
+
+    animation.play();
+
+    javafx.application.Platform.enterNestedEventLoop(key);
+  }
+}
+104b. Have Hand's displayCard() method return the CardView.
+
+104c. Have Hand's addCard() method return the CardView created by displayCard() back to Round. return null if it isn't started yet.
+104d. Instantiate a new TableAnimator  field in Round's constructor.
+104e. In Round's play() method, replace the 4 initial addCard/drawCard calls with the following, in order to animate them:
+    Card card;
+
+    // Player first card
+    card = shoeMgr.drawCard();
+    CardView playerCard1 = playerHands[0].addCard(card);
+    tableAnimator.dealCard(card, playerCard1, false);
+
+    // Dealer first card
+    card = shoeMgr.drawCard();
+    CardView dealerCard1 = dealerHand.addCard(card);
+    tableAnimator.dealCard(card, dealerCard1, false);
+
+    // Player second card
+    card = shoeMgr.drawCard();
+    CardView playerCard2 = playerHands[0].addCard(card);
+    tableAnimator.dealCard(card, playerCard2, false);
+
+    // Dealer hole card
+    card = shoeMgr.drawCard();
+    CardView dealerCard2 = dealerHand.addCard(card);
+    tableAnimator.dealCard(card, dealerCard2, true);
+
+104f. Animate the 3 drawCards in playSubRound. Capture the CardView from addCard and call tableAnimator.dealCard(card, cardView, false)
+
+105. Animate the flipping of the dealer hole card. 
+105a.Add this method to TableAnimator:
+    public void flipCard(Card card, CardView cardView)
+    {
+      ScaleTransition flipClose =
+          new ScaleTransition(FLIP_HALF_DURATION, cardView);
+    
+      flipClose.setFromX(1.0);
+      flipClose.setToX(0.0);
+      flipClose.setOnFinished(e -> cardView.showFront(card));
+    
+      ScaleTransition flipOpen =
+          new ScaleTransition(FLIP_HALF_DURATION, cardView);
+    
+      flipOpen.setFromX(0.0);
+      flipOpen.setToX(1.0);
+    
+      SequentialTransition sequence =
+          new SequentialTransition(flipClose, flipOpen);
+    
+      playAndWait(sequence);
+    }
+105b. In Hand, modify showDealerHoleCard. Remove the 2 lines of code that actually show the card. Just call showScoreBadge();
+105c. Add these 2 methods to Hand:
+public Card getDealerHoleCard()
+{
+  return cards.get(1);
+}
+
+public CardView getDealerHoleCardView()
+{
+  return (CardView) cardNodes.get(1);
+}
+105d. In Round, in all places where we call showDealerHoleCard, make a follow-up call to:
+tableAnimator.flipCard(
+    dealerHand.getDealerHoleCard(),
+    dealerHand.getDealerHoleCardView()
+);
+
+106. Animate the hand cleanup.
+106a. Add a discard anchor in BlackjackSceneCreator. Add a temporary label in the upper right, and add an accessor:
+private Label discardOverlay = new Label("[Discard]");
+
+discardOverlay.setStyle(
+    "-fx-text-fill: white;" +
+    "-fx-font-weight: bold;" +
+    "-fx-padding: 5px;"
+);
+
+layeredPane.getChildren().add(discardOverlay);
+
+StackPane.setAlignment(discardOverlay, Pos.TOP_RIGHT);
+StackPane.setMargin(discardOverlay, new Insets(10));
+
+106b. Add discardCards method to TableAnimator.
+import javafx.animation.ParallelTransition;
+import java.util.List;
+import java.util.ArrayList;
+
+public void discardCards(List<Node> cards)
+{
+  if (cards.isEmpty())
+    return;
+
+  Node discardAnchor = sceneCreator.getDiscardAnchor();
+
+  Bounds discardBounds =
+      discardAnchor.localToScene(
+          discardAnchor.getBoundsInLocal()
+      );
+
+  double discardX = discardBounds.getCenterX();
+  double discardY = discardBounds.getCenterY();
+
+  SequentialTransition wholeSequence =
+      new SequentialTransition();
+
+  wholeSequence.getChildren().add(
+      new PauseTransition(Duration.millis(900))
+  );
+
+  for (Node node : cards)
+  {
+    if (!(node instanceof CardView))
+      continue;
+
+    CardView cardView = (CardView) node;
+
+    ScaleTransition flipClose =
+        new ScaleTransition(
+            FLIP_HALF_DURATION,
+            cardView
+        );
+
+    flipClose.setFromX(1.0);
+    flipClose.setToX(0.0);
+
+    flipClose.setOnFinished(e ->
+        cardView.showBack()
+    );
+
+    ScaleTransition flipOpen =
+        new ScaleTransition(
+            FLIP_HALF_DURATION,
+            cardView
+        );
+
+    flipOpen.setFromX(0.0);
+    flipOpen.setToX(1.0);
+
+    SequentialTransition flip =
+        new SequentialTransition(
+            flipClose,
+            flipOpen
+        );
+
+    wholeSequence.getChildren().add(flip);
+  }
+
+  ParallelTransition sweep =
+      new ParallelTransition();
+
+  for (Node node : cards)
+  {
+    if (!(node instanceof CardView))
+      continue;
+
+    CardView cardView = (CardView) node;
+
+    Bounds cardBounds =
+        cardView.localToScene(
+            cardView.getBoundsInLocal()
+        );
+
+    TranslateTransition move =
+        new TranslateTransition(
+            Duration.millis(320),
+            cardView
+        );
+
+    move.setByX(
+        discardX - cardBounds.getCenterX()
+    );
+
+    move.setByY(
+        discardY - cardBounds.getCenterY()
+    );
+
+    move.setInterpolator(
+        Interpolator.EASE_IN
+    );
+
+    sweep.getChildren().add(move);
+  }
+
+  wholeSequence.getChildren().add(sweep);
+
+  playAndWait(wholeSequence);
+}
+
+106c. Add clearTable() in the same class.
+public void clearTable()
+{
+  List<Node> allCards = new ArrayList<>();
+
+  allCards.addAll(
+      sceneCreator.getDealerCards()
+  );
+
+  allCards.addAll(
+      sceneCreator.getPlayerCards()
+  );
+
+  discardCards(allCards);
+
+  sceneCreator.getDealerCards().clear();
+  sceneCreator.getPlayerCards().clear();
+}
+106d. In Main, remove the calls to getPlayerCards.clear() and getDealerCards.clear().
+106e. At the very end of Round.play(), trigger the discard.
+
+
+107. Next, we will perform a series of refactorings so that we can fix the splitting problem whereby the Dealer hand is erroneously shown after the first subround. Having the dealer hand shown at the end, and then going back in time to re-visit the subrounds, is a significant re-design of the business logic and the UX experience. Let's chip away.
+108. The Wager object is shared across all Subrounds. This is dangerous. Let's create a Subround object that has the player's Hand and the Wager.
+108a. Create Subround.java
+public class Subround
+{
+  private Hand hand;
+  private Wager wager;
+
+  public Subround(Hand hand, Wager wager)
+  {
+    this.hand = hand;
+    this.wager = wager;
+  }
+
+  public Hand getHand()
+  {
+    return hand;
+  }
+
+  public Wager getWager()
+  {
+    return wager;
+  }
+}
+108b. Update Round.play() to have an array of Subrounds instead of an array of Hands. (Re-wire as needed. Maintain shared Wager across Subrounds for now. The helper methods hasMultipleSubrounds, blockSplitting, getNumSubrounds, and lastSlot all take Subround[] now instead of Hand[])
+
+109. Now we can refactor such that each Subround gets its own Wager.
+109a. Right now didSplitAces is part of Wager. But that's weird; it's natural home is Subround. Add a bool splitAces field to Subround, along with  didSplitAces and setSplitAces accessors.
+109b. When splitting, create a new Wager for the split hand. If we split aces, record that in both Hands resulting from the split. Replace:
+subrounds[nextFreeSlot] = new Subround(newPlayerHand, currentWager);
+
+with:
+boolean splittingAces = currentHand.isDoubleAces();
+Wager newWager = new Wager(bankroll, currentWager.getBetAmount(), outputter);
+Subround newSubround = new Subround(newPlayerHand, newWager);
+currentSubround.setSplitAces(splittingAces);
+newSubround.setSplitAces(splittingAces);
+subrounds[nextFreeSlot] = newSubround;
+109c. Change the signature of playSubround from playSubRound(Hand playerHand, Hand dealerHand, Wager wager) to 
+playSubRound(Subround subround, Hand dealerHand) and wire accordingly.
+109d. In playSubRound, change if (!wager.didSplitAces()) to if (!subRound.didSplitAces())
+
+110. Let's make playSubRound only be responsible for the player hand.
+110a. Change the signature of public String playSubRound(Subround subround, Hand dealerHand) to private void playPlayerSubround(Subround subround)
+110b. 
+
+
+
+
+
+
+
+
+
+
+
+    
 <TODO: WE are here. code this>
 100. Display chips in BetDialog matching the wager choice. Have AI create PNG files of chips in $1 (white), $2.50 (pink), $5 (red), $25 (green), $100(black), $500(purple), and $1000(orange). Place the png files in the /resources folder.
 

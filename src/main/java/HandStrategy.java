@@ -1,4 +1,4 @@
 public interface HandStrategy
 {
-  HandAction chooseAction(Hand hand, Wager wager);
+  HandAction chooseAction(PlayerDecisionContext context);
 }

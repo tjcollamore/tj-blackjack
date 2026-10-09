@@ -3,6 +3,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.Cursor;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -13,7 +14,8 @@ import javafx.stage.Stage;
 
 import java.util.*;
 
-public class BlackjackSceneCreator {
+public class BlackjackSceneCreator 
+{
   private static final double ACTION_BAR_CLEARANCE = 50;
   
   private HBox dealerCards = new HBox(10);
@@ -24,24 +26,30 @@ public class BlackjackSceneCreator {
   private SubroundBadge subroundBadge = new SubroundBadge();
   private final ScoreBadge playerScoreBadge = new ScoreBadge();
   private final ScoreBadge dealerScoreBadge = new ScoreBadge();
-  private final ImageView gearIcon =
-    new ImageView("file:src/main/resources/gear.png");
-  
+  private BorderPane root;
+  private final ImageView gearIcon = new ImageView("file:src/main/resources/gear.png");
+  private GameSettings settings;
+
+  public BlackjackSceneCreator(GameSettings settings)
+  {
+    this.settings = settings;
+  }
+
   public Scene create() 
   {
     // For now, don't show the placeholder strings
     shoeOverlay.setOpacity(0);
     discardOverlay.setOpacity(0);
 
-    
     StackPane layeredPane = new StackPane();
     Scene scene = new Scene(layeredPane, 500, 600);
 
-    BorderPane root = new BorderPane();
-    root.setStyle("-fx-background-image: url('/felt_green.png');" +
-                  "-fx-background-repeat: repeat;" +
+    root = new BorderPane();
+    root.setStyle("-fx-background-repeat: repeat;" +
                   "-fx-background-size: auto;" +
                   "-fx-background-position: center;");
+
+    setFeltColor(settings.getFeltColor());
 
     layeredPane.getChildren().add(root);
 
@@ -120,7 +128,7 @@ public class BlackjackSceneCreator {
     StackPane playerStack = new StackPane(playerCards);
     playerStack.setAlignment(Pos.CENTER);
     StackPane.setAlignment(playerScoreBadge, Pos.TOP_RIGHT);
-    StackPane.setMargin(playerScoreBadge, new Insets(5, 5, 0, 0));
+    StackPane.setMargin(playerScoreBadge, new Insets(2, 5, 0, 0));
     playerStack.getChildren().add(playerScoreBadge);
 
     StackPane.setAlignment(subroundBadge, Pos.BOTTOM_RIGHT);
@@ -160,6 +168,13 @@ public class BlackjackSceneCreator {
     gearIcon.setEffect(muted);
     gearIcon.setOpacity(0.75);
 
+    gearIcon.setFitWidth(20);
+    gearIcon.setFitHeight(20);
+    gearIcon.setPreserveRatio(true);
+
+    gearIcon.setPickOnBounds(true);
+    gearIcon.setCursor(Cursor.HAND);
+    
     gearIcon.setOnMouseEntered(e -> {
         gearIcon.setEffect(null);
         gearIcon.setOpacity(1.0);
@@ -168,6 +183,15 @@ public class BlackjackSceneCreator {
     gearIcon.setOnMouseExited(e -> {
         gearIcon.setEffect(muted);
         gearIcon.setOpacity(0.75);
+    });
+
+    gearIcon.setOnMouseClicked(e -> {
+        Stage stage =
+            (Stage) gearIcon
+                .getScene()
+                .getWindow();
+
+        SettingsDialog.show(stage, settings, this);
     });
     
     return scene;
@@ -228,5 +252,33 @@ public class BlackjackSceneCreator {
     bankrollLabel.setMinWidth(120);
     bankrollLabel.setWrapText(false);
     bankrollLabel.setAlignment(Pos.CENTER);
+  }
+  
+  public void setFeltColor(
+    GameSettings.FeltColor feltColor)
+  {
+    String image;
+  
+    switch (feltColor)
+    {
+      case BLUE:
+        image = "/felt_blue.png";
+        break;
+  
+      case BURGUNDY:
+        image = "/felt_burgundy.png";
+        break;
+  
+      default:
+        image = "/felt_green.png";
+        break;
+    }
+  
+    root.setStyle(
+        "-fx-background-image: url('" + image + "');" +
+        "-fx-background-repeat: repeat;" +
+        "-fx-background-size: auto;" +
+        "-fx-background-position: center;"
+    );
   }
 }
