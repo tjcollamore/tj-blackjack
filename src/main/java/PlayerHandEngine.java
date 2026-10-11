@@ -19,10 +19,11 @@ public class PlayerHandEngine
       boolean cameFromSplit,
       boolean canDoubleOrSplit,
       double wagerAmount,
+      Runnable onDoubleChosen,
       Consumer<Card> onCardDrawn)
   {
     if (playerHand.is21())
-      return PlayerHandPlayResult.FINISHED;
+      return PlayerHandPlayResult.CARD_TERMINATED;
 
     while (true)
     {
@@ -81,7 +82,7 @@ public class PlayerHandEngine
           if (playerHand.isBusted()
               || playerHand.is21())
           {
-            return PlayerHandPlayResult.FINISHED;
+            return PlayerHandPlayResult.CARD_TERMINATED;
           }
 
           break;
@@ -92,9 +93,10 @@ public class PlayerHandEngine
 
         case DOUBLE:
         {
-          Card card =
-              shoe.drawCard();
-
+          if (onDoubleChosen != null)
+            onDoubleChosen.run();
+            
+          Card card = shoe.drawCard();
           playerHand.addCard(card);
 
           if (onCardDrawn != null)

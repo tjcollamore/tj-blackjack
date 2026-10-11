@@ -22,29 +22,31 @@ public class ChoiceDialog {
 
     private static final double ACTION_BAR_HEIGHT = 57;
 
-    public static String show(
+/*    
+    public static String showOptions(
         Stage ownerStage,
         String... options)
     {
         return show(ownerStage, "", MessageTone.DEFAULT, null, null, null, options);
     }
-
-    public static String show(
+*/
+    
+    public static String showWithMessage(
         Stage ownerStage,
         String message,
         MessageTone messageTone,
         String... options)
     {
-        return show(ownerStage, message, messageTone, null, null, null, options);
+        return showInternal(ownerStage, message, messageTone, null, null, null, options);
     }
 
-    public static String show(
+    public static String showActionBar(
         Stage ownerStage,
         Node leftAccessory,  // settings icon
         Node leadingContent, // generic content for wager selection
         String... options) 
     {
-        return show(ownerStage, "", MessageTone.DEFAULT, null, leftAccessory, leadingContent, options);
+        return showInternal(ownerStage, "", MessageTone.DEFAULT, null, leftAccessory, leadingContent, options);
 }
 
     public static String showWithHighlightedOption(
@@ -53,7 +55,7 @@ public class ChoiceDialog {
         String highlightedOption,
         String... options)
     {
-      return show(
+      return showInternal(
           ownerStage,
           "",
           MessageTone.DEFAULT,
@@ -63,8 +65,24 @@ public class ChoiceDialog {
           options
       );
     }
+
+    public static String showWithLeadingContent(
+        Stage ownerStage,
+        Node leadingContent,
+        String... options)
+    {
+        return showInternal(
+            ownerStage,
+            "",
+            MessageTone.DEFAULT,
+            null,
+            null,
+            leadingContent,
+            options
+        );
+    }
     
-    public static String show(
+    private static String showInternal(
         Stage ownerStage,
         String message,
         MessageTone messageTone,
@@ -152,7 +170,9 @@ public class ChoiceDialog {
 
         // Optional content immediately before the choice buttons,
         // such as the wager selector
-        if (leadingContent != null) {
+        if (leadingContent != null) 
+        {
+            actionControls.setTranslateX(55);
             actionControls.getChildren().add(leadingContent);
             HBox.setMargin(leadingContent, new Insets(0, 14, 0, 0));
         }
@@ -390,7 +410,7 @@ public class ChoiceDialog {
         StackPane.setAlignment(messageBox, Pos.CENTER);
 
         // Optional: move it a little above/below exact center
-        messageBox.setTranslateY(-20);
+        messageBox.setTranslateY(-122);
 
         messageBox.setOpacity(0.0);
         gameRoot.getChildren().add(messageBox);

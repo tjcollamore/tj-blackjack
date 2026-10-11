@@ -57,7 +57,7 @@ public class PlayerInteractiveHandStrategy implements HandStrategy
     else
     {
       choice =
-          ChoiceDialog.show(
+          ChoiceDialog.showActionBar(
               stage,
               helpButton,
               null,

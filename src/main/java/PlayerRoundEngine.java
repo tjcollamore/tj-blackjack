@@ -52,7 +52,8 @@ public class PlayerRoundEngine
         listener.handFinished(
             state,
             i,
-            hands.size()
+            hands.size(),
+            HandFinishReason.SPLIT_ACES
         );
 
         continue;
@@ -71,6 +72,10 @@ public class PlayerRoundEngine
               listener.getWagerAmount(
                   state
               ),
+              () ->
+                  listener.handDoubled(
+                      state
+                  ),
               card ->
                   listener.cardDrawn(
                       state,
@@ -78,30 +83,31 @@ public class PlayerRoundEngine
                   )
           );
 
+    HandFinishReason finishReason = null;
     switch (result)
     {
       case FINISHED:
+        finishReason = HandFinishReason.STAND;
         break;
 
+      case CARD_TERMINATED:
+      {
+        finishReason = HandFinishReason.CARD_TERMINATED;
+        break;
+      }
+        
       case DOUBLED:
       {
         state.markDoubled();
-
-        listener.handDoubled(
-            state
-        );
-
+        finishReason = HandFinishReason.DOUBLE;
         break;
       }
 
       case SURRENDERED:
       {
         state.markSurrendered();
-
-        listener.handSurrendered(
-            state
-        );
-
+        listener.handSurrendered(state);
+        finishReason = HandFinishReason.SURRENDER;
         break;
       }
 
@@ -150,11 +156,14 @@ public class PlayerRoundEngine
       }
     }
 
-    listener.handFinished(
-        state,
-        i,
-        hands.size()
-    );
+    if (finishReason == null)
+    {
+      throw new IllegalStateException(
+          "Hand finished without a finish reason"
+      );
+    }
+        
+    listener.handFinished(state, i, hands.size(), finishReason);
     }
 
     return hands;

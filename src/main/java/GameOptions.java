@@ -7,4 +7,5 @@ public class GameOptions
   public static final int TABLE_MIN_BET = 15;
   public static final int TABLE_MAX_BET = 1000;
   public static final int STARTING_BANKROLL = 500;
+  public static final int ATM_BANK_FEE = 10;
 }

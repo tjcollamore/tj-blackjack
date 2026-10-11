@@ -47,6 +47,11 @@ public class HandView
       cardNodes.remove(slot);
   }
 
+  public CardView getCardView(int slot)
+  {
+    return (CardView) cardNodes.get(slot);
+  }
+  
   public void start(Hand hand)
   {
     if (hasStarted)
@@ -91,6 +96,39 @@ public class HandView
     }
   }
 
+  public boolean hasStarted()
+  {
+    return hasStarted;
+  }
+  
+  public CardView startSplitHand(
+    Hand hand)
+  {
+    if (hasStarted)
+      return null;
+  
+    hasStarted = true;
+  
+    cardNodes.clear();
+  
+    /*
+     * Show the original split card immediately.
+     */
+    displayCard(
+        hand,
+        hand.getCard(0)
+    );
+  
+    /*
+     * Create the fresh second card so it can
+     * be animated in by TableAnimator.
+     */
+    return displayCard(
+        hand,
+        hand.getCard(1)
+    );
+  }
+  
   public void showDealerHoleCard(
       Hand hand)
   {

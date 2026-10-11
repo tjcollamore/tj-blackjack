@@ -390,16 +390,16 @@ public class DecisionHelpDialog
   private static String getHandDescription(Hand hand)
   {
     if (hand.getNumCards() == 2
-        && hand.getCard(0).getPointValue()
-           == hand.getCard(1).getPointValue())
+        && hand.getCard(0).getRank()
+           == hand.getCard(1).getRank())
     {
       return "Pair of "
-          + hand.getCard(0)
-              .getRank()
-              .getShortName()
-          + "s";
+            + hand.getCard(0)
+                .getRank()
+                .getShortName()
+            + "s";
     }
-
+          
     if (hand.isSoft())
       return "Soft " + hand.getScore();
 
@@ -485,18 +485,17 @@ public class DecisionHelpDialog
         boolean recommended,
         double wagerAmount)
     {
-      double ev =
-          result.getExpectedValue();
-        double dollarEv =
-            ev * wagerAmount;
-            
-      String evColor;
+      double ev = result.getExpectedValue();
+      double dollarEv = ev * wagerAmount;
+      double roundedDollarEv = 
+          Math.round(dollarEv * 100.0) / 100.0;
 
-      if (ev > 0.01)
+      String evColor;
+      if (roundedDollarEv > 0.0)
       {
         evColor = "#7bd88f";
       }
-      else if (ev < -0.01)
+      else if (roundedDollarEv < 0.0)
       {
         evColor = "#ff7b7b";
       }
@@ -504,7 +503,7 @@ public class DecisionHelpDialog
       {
         evColor = "#dddddd";
       }
-
+        
       String actionText;
 
       if (action == HandAction.SURRENDER)
@@ -537,7 +536,7 @@ public class DecisionHelpDialog
     addDataLabel(
         grid,
         formatDollarEv(
-            dollarEv
+            roundedDollarEv
         ),
         1,
         row,

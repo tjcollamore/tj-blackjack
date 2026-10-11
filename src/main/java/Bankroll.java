@@ -8,11 +8,13 @@ public class Bankroll
   private double bankroll;
   private IOutputter outputter;
   private Label bankrollLabel;
-
-  public Bankroll(double bankroll, Label bankrollLabel, IOutputter outputter)
+  private ChipStackView chipStackView;
+  
+  public Bankroll(double bankroll, Label bankrollLabel, ChipStackView chipStackView, IOutputter outputter)
   {
     this.bankroll = bankroll;
     this.bankrollLabel = bankrollLabel;
+    this.chipStackView = chipStackView;
     this.outputter = outputter;
     output();
   }
@@ -33,6 +35,10 @@ public class Bankroll
   {
     outputter.output("Bankroll: " + getFormattedBankroll());
     bankrollLabel.setText(getFormattedBankroll());
+  chipStackView.setAmount(
+      bankroll,
+      ChipDisplayMode.BANKROLL
+  );
   }
 
   public static String getFormattedCurrency(double amount)
@@ -46,17 +52,49 @@ public class Bankroll
     return getFormattedCurrency(bankroll);
   }
 
-  public void addFundsIfBroke(Stage stage, double amount, int tableMinBet)
+  public void addFundsIfBroke(Stage stage, double amount, double atmFee, int tableMinBet)
     {
       if (bankroll < tableMinBet)
       {
         outputter.output("You do not have funds. Withdrawing another " + getFormattedCurrency(amount)  + " from the ATM.");
-        ChoiceDialog.show(stage, "You do not have funds.\nWithdrawing another " + getFormattedCurrency(amount) + " from the ATM.", "OK");
-        deposit(amount);
+        ChoiceDialog.showWithMessage(stage, "You do not have funds.\nWithdrawing another " + getFormattedCurrency(amount) + " from the ATM (minus a " + getFormattedCurrency(atmFee) + " bank fee).", MessageTone.NEGATIVE, "OK");
+        deposit(amount - atmFee);
       }
     }
 
+  public void showWagerPreview(
+    int wagerAmount)
+  {
+  double previewBankroll =
+      Math.max(
+          0,
+          bankroll - wagerAmount
+      );
 
+  bankrollLabel.setText(
+      getFormattedCurrency(
+          previewBankroll
+      )
+  );
+
+  chipStackView.setAmount(
+      previewBankroll,
+      ChipDisplayMode.BANKROLL
+  );
+  }
+
+  public void showActualBankroll()
+  {
+  bankrollLabel.setText(
+      getFormattedBankroll()
+  );
+
+  chipStackView.setAmount(
+      bankroll,
+      ChipDisplayMode.BANKROLL
+  );
+  }
+  
   public double get()
   {
     return bankroll;

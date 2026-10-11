@@ -38,6 +38,7 @@ public class Round
   public void play()
   {
     sceneCreator.getPlayerScoreBadge().setShowSoftIndicator(true);
+    tableAnimator.commitWager(betAmount);
     
     Wager wager = new Wager(bankroll, betAmount);
     wager.place();
@@ -126,8 +127,44 @@ public class Round
                   .getPlayerScoreBadge()
                   .setShowSoftIndicator(true);
 
-              getHandView(hand).start(hand);
+              HandView handView = getHandView(hand);
 
+              if (state.cameFromSplit() && !handView.hasStarted())
+              {
+                CardView secondCardView = handView.startSplitHand(hand);
+  
+                if (secondCardView != null)
+                {
+                  tableAnimator.dealCard(
+                      hand.getCard(1),
+                      secondCardView,
+                      false
+                  );
+                }
+              }
+              else
+              {
+                handView.start(hand);
+              }
+              
+              Subround subround = subroundByState.get(state);
+
+              sceneCreator
+                .getWagerPreviewChipView()
+                .setAmount(
+                    0,
+                    ChipDisplayMode.WAGER
+                );
+
+              sceneCreator
+                .getWagerChipView()
+                .setAmount(
+                    subround
+                        .getWager()
+                        .getBetAmount(),
+                    ChipDisplayMode.WAGER
+                );
+              
               sceneCreator
                   .getSubroundBadge()
                   .update(
@@ -150,25 +187,54 @@ public class Round
             }
 
             @Override
-            public void handDoubled(PlayerHandState state)
+            public void handDoubled(
+                PlayerHandState state)
             {
-              subroundByState.get(state).getWager().doubleDown();
+              Wager wager =
+                  subroundByState
+                      .get(state)
+                      .getWager();
+
+              double additionalWager =
+                  wager.getBetAmount();
+
+              wager.doubleDown();
+
+              tableAnimator
+                  .animateWagerAddition(
+                      additionalWager,
+                      wager.getBetAmount()
+                  );
             }
-  
+            
             @Override
             public void handSurrendered(PlayerHandState state)
             {
-              subroundByState.get(state).getWager().surrender();
+              Wager wager =
+                  subroundByState
+                      .get(state)
+                      .getWager();
+
+              double wagerAmount =
+                  wager.getBetAmount();
+
+              wager.surrender();
+
+              tableAnimator.animateSurrender(
+                  wagerAmount
+              );
             }
 
             @Override
             public void handFinished(
                 PlayerHandState state,
                 int index,
-                int handCount)
+                int handCount,
+                HandFinishReason reason)
             {
-              if (state.didSplitAces()
-                  || state.getWagerMultiplier() > 1.0)
+              if (reason == HandFinishReason.CARD_TERMINATED
+                  || reason == HandFinishReason.DOUBLE
+                  || reason == HandFinishReason.SPLIT_ACES)
               {
                 tableAnimator.pause(
                     Duration.seconds(0.8)
@@ -200,6 +266,7 @@ public class Round
                                         .getWager()
                                         .getBetAmount());
               newWager.place();
+              tableAnimator.animateSplitWager(newWager.getBetAmount());
               Subround newSubround = new Subround(newPlayerHand, newWager);
 
               currentSubround.setCameFromSplit(true);
@@ -211,12 +278,39 @@ public class Round
               subrounds[nextFreeSlot] = newSubround;
               subroundByState.put(newState, newSubround);
 
-              getHandView(currentHand).cardRemoved(1);
-              getHandView(currentHand).cardAdded(
-                                                currentHand,
-                                                splitResult
-                                                    .getCardDealtToCurrentHand()
-                                            );
+              CardView splitCardView =
+                getHandView(currentHand)
+                    .getCardView(1);
+    
+              tableAnimator.moveSplitCardRight(
+                splitCardView
+              );
+    
+              getHandView(currentHand)
+                .cardRemoved(1);
+    
+              /*
+              * The split itself has now visually happened,
+              * so return to the single active-hand wager.
+              */
+              tableAnimator.finishSplitWagerAnimation();
+    
+              Card replacementCard =
+                splitResult
+                    .getCardDealtToCurrentHand();
+    
+              CardView replacementView =
+                getHandView(currentHand)
+                    .cardAdded(
+                        currentHand,
+                        replacementCard
+                    );
+    
+              tableAnimator.dealCard(
+                replacementCard,
+                replacementView,
+                false
+              );
             }
           }
       );
@@ -239,11 +333,31 @@ public class Round
       if (result != null && result.getMessage() != null
           && !result.getMessage().isBlank())
       {
+        Wager finalWager = subrounds[0].getWager();
+
         ChoiceDialog.showGameMessage(
             stage,
             result.getMessage(),
             result.getTone()
         );
+
+        
+        if (finalWager.didSurrender())
+        {
+          // Later: surrender animation
+        }
+        else if (finalWager.getPayout() == 0)
+        {
+          tableAnimator.animateLostWager();
+        }
+        else if (finalWager.getPayout() == finalWager.getBetAmount())
+        {
+          tableAnimator.animatePush();
+        }
+        else if (finalWager.getPayout() > finalWager.getBetAmount())
+        {
+          tableAnimator.animateWinningPayout(finalWager.getBetAmount(), finalWager.getPayout());
+        }
 
         tableAnimator.pause(
             Duration.seconds(2.2)
@@ -358,12 +472,8 @@ public class Round
     // Always begin review on the first hand.
     showReviewSubround(subrounds, 0);
 
-    ChoiceDialog.show(
+    ChoiceDialog.showWithLeadingContent(
         stage,
-        "",
-        MessageTone.DEFAULT,
-        null,
-        null,
         reviewNavigator,
         "DONE"
     );
@@ -376,6 +486,11 @@ public class Round
     Subround subround = subrounds[index];
     Hand hand = subround.getHand();
     getHandView(hand).showPlayerHand(hand);
+
+    sceneCreator
+      .getWagerChipView()
+      .setAmount(
+          subround.getWager().getBetAmount(),ChipDisplayMode.WAGER);
   }
 
   private double getTotalWagered(Subround[] subrounds)
@@ -462,6 +577,11 @@ public class Round
         tone
     );
 
+    tableAnimator.animateAggregateSettlement(
+        wagered,
+        payout
+    );
+    
     tableAnimator.pause(
         Duration.seconds(2.2)
     );

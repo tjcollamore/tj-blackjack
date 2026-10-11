@@ -11,16 +11,21 @@ import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
-
+import javafx.scene.shape.Ellipse;
 import java.util.*;
 
 public class BlackjackSceneCreator 
 {
   private static final double ACTION_BAR_CLEARANCE = 50;
   
+  private Stage primaryStage;
   private HBox dealerCards = new HBox(10);
   private HBox playerCards = new HBox(10);
   private Label bankrollLabel = new Label();
+  private ChipStackView bankrollChipView = new ChipStackView();
+  private ChipStackView wagerChipView = new ChipStackView();
+  private ChipStackView wagerPreviewChipView = new ChipStackView();
+  private ChipStackView splitWagerChipView = new ChipStackView();
   private Label shoeOverlay = new Label("[Shoe]");
   private Label discardOverlay = new Label("[Discard]");
   private SubroundBadge subroundBadge = new SubroundBadge();
@@ -29,6 +34,9 @@ public class BlackjackSceneCreator
   private BorderPane root;
   private final ImageView gearIcon = new ImageView("file:src/main/resources/gear.png");
   private GameSettings settings;
+  private Ellipse wagerSpot = new Ellipse(58, 40);
+  private StackPane wagerArea;
+  private VBox wagerPreviewArea;
 
   public BlackjackSceneCreator(GameSettings settings)
   {
@@ -42,7 +50,7 @@ public class BlackjackSceneCreator
     discardOverlay.setOpacity(0);
 
     StackPane layeredPane = new StackPane();
-    Scene scene = new Scene(layeredPane, 500, 600);
+    Scene scene = new Scene(layeredPane, 500, 760);
 
     root = new BorderPane();
     root.setStyle("-fx-background-repeat: repeat;" +
@@ -84,14 +92,66 @@ public class BlackjackSceneCreator
     Region spacerMiddle = new Region();
     VBox.setVgrow(spacerMiddle, Priority.ALWAYS);
 
-    Label chipStackPlaceholder = new Label("[Chips]");   
-    chipStackPlaceholder.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
-    chipStackPlaceholder.setOpacity(0);
-    
     setupBankrollDisplay();
-    VBox bankrollBox = new VBox(5, chipStackPlaceholder, bankrollLabel);
-    bankrollBox.setAlignment(Pos.BOTTOM_CENTER);
-    bankrollBox.setFillWidth(false);
+
+    StackPane bankrollPileArea =
+        new StackPane(
+            bankrollChipView
+        );
+
+    bankrollPileArea.setMinHeight(
+        170
+    );
+
+    bankrollPileArea.setPrefHeight(
+        170
+    );
+
+    bankrollPileArea.setMaxHeight(
+        170
+    );
+
+    bankrollPileArea.setMinWidth(
+        140
+    );
+
+    bankrollPileArea.setPrefWidth(
+        140
+    );
+
+    bankrollPileArea.setMaxWidth(
+        140
+    );
+
+    bankrollPileArea.setAlignment(
+        Pos.BOTTOM_CENTER
+    );
+
+    StackPane.setAlignment(
+        bankrollChipView,
+        Pos.BOTTOM_CENTER
+    );
+
+    VBox bankrollBox =
+        new VBox(
+            2,
+            bankrollPileArea,
+            bankrollLabel
+        );
+
+    bankrollBox.setAlignment(
+        Pos.BOTTOM_CENTER
+    );
+
+    bankrollBox.setFillWidth(
+        false
+    );
+    bankrollBox.setTranslateX(
+        -20
+    );
+    bankrollBox.setTranslateY(
+        100
+    );
 
     Region spacerBottom = new Region();
     VBox.setVgrow(spacerBottom, Priority.ALWAYS);
@@ -136,7 +196,79 @@ public class BlackjackSceneCreator
     playerStack.getChildren().add(subroundBadge);
     playerStack.setMaxWidth(Double.MAX_VALUE);
 
-    VBox playerArea = new VBox(playerStack);
+    wagerChipView.setAmount(0, ChipDisplayMode.WAGER);
+
+    wagerSpot.setFill(Color.rgb(255, 255, 255, 0.035));
+    wagerSpot.setStroke(Color.rgb(255, 255, 255, 0.22));
+    wagerSpot.setStrokeWidth(1.5);
+
+    splitWagerChipView.setAmount(0, ChipDisplayMode.WAGER);
+    wagerArea = new StackPane(wagerSpot, wagerChipView, splitWagerChipView);
+    wagerArea.setAlignment(Pos.CENTER);
+    wagerArea.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+
+    wagerPreviewArea = new VBox(wagerPreviewChipView);
+    wagerPreviewArea.setAlignment(Pos.BOTTOM_CENTER);
+
+
+    /*
+    * The committed wager stays permanently centered
+    * underneath the player's cards.
+    *
+    * The wager preview is independently positioned
+    * to the left, so showing/hiding it cannot move
+    * the betting spot.
+    */
+    StackPane wagerRow =
+      new StackPane();
+
+    wagerRow.setMinHeight(
+      90
+    );
+
+    wagerRow.setPrefHeight(
+      90
+    );
+
+    wagerRow.setMaxWidth(
+      Double.MAX_VALUE
+    );
+
+
+    /*
+    * Permanent betting spot:
+    * centered below the player's cards.
+    */
+    StackPane.setAlignment(
+      wagerArea,
+      Pos.CENTER
+    );
+
+    playerStack.setTranslateY(
+        -100
+    );
+    wagerArea.setTranslateY(
+        -115
+    );
+
+
+    /*
+    * Selected-wager preview:
+    * positioned independently to the left.
+    */
+    StackPane.setAlignment(
+      wagerPreviewArea,
+      Pos.CENTER
+    );
+
+    wagerPreviewArea.setTranslateX(-130);
+    wagerPreviewArea.setTranslateY(-2);
+    wagerRow.getChildren().addAll(
+      wagerArea,
+      wagerPreviewArea
+    );
+    
+    VBox playerArea = new VBox(4, playerStack, wagerRow);
     playerArea.setAlignment(Pos.BOTTOM_CENTER);
     playerArea.setPadding(new Insets(0, 10, ACTION_BAR_CLEARANCE, 10)); // extra bottom padding to leave space for ChoiceDialog
     VBox.setVgrow(playerArea, Priority.ALWAYS);
@@ -186,12 +318,7 @@ public class BlackjackSceneCreator
     });
 
     gearIcon.setOnMouseClicked(e -> {
-        Stage stage =
-            (Stage) gearIcon
-                .getScene()
-                .getWindow();
-
-        SettingsDialog.show(stage, settings, this);
+        SettingsDialog.show(primaryStage, settings, this);
     });
     
     return scene;
@@ -226,36 +353,89 @@ public class BlackjackSceneCreator
     return dealerScoreBadge;
   }
   
-  public List<Node> getDealerCards() {
+  public List<Node> getDealerCards() 
+  {
     return dealerCards.getChildren();
+  }
+
+  public Node getDealerArea()
+  {
+    return dealerCards;
   }
 
   public List<Node> getPlayerCards() {
     return playerCards.getChildren();
   }
 
-  public Label getBankrollLabel() {
+  public ChipStackView getBankrollChipView()
+  {
+    return bankrollChipView;
+  }
+  
+  public ChipStackView getWagerChipView()
+  {
+    return wagerChipView;
+  }
+ 
+  public ChipStackView getWagerPreviewChipView()
+  {
+    return wagerPreviewChipView;
+  }
+  
+  public Label getBankrollLabel() 
+  {
     return bankrollLabel;
   }
 
-  private void setupBankrollDisplay() {
-    bankrollLabel.setText("$0.00");
-    bankrollLabel.setStyle("-fx-font-size: 16px;" +
-                            "-fx-font-weight: bold;" +
-                            "-fx-text-fill: #FFD700;" +
-                            "-fx-background-color: rgba(0, 0, 0, 0.7);" +
-                            "-fx-background-radius: 10px;" +
-                            "-fx-padding: 10px 10px;" +
-                            "-fx-border-color: #FFD700;" +
-                            "-fx-border-width: 2px;" +
-                            "-fx-border-radius: 10px;");
-    bankrollLabel.setMinWidth(120);
-    bankrollLabel.setWrapText(false);
-    bankrollLabel.setAlignment(Pos.CENTER);
+  public Node getWagerArea()
+  {
+    return wagerArea;
+  }
+
+  public Node getWagerPreviewArea()
+  {
+    return wagerPreviewArea;
   }
   
-  public void setFeltColor(
-    GameSettings.FeltColor feltColor)
+  public ChipStackView getSplitWagerChipView()
+  {
+    return splitWagerChipView;
+  }
+  
+  private void setupBankrollDisplay()
+  {
+    bankrollLabel.setText(
+        "$0.00"
+    );
+
+    bankrollLabel.setStyle(
+        "-fx-font-size: 14px;"
+        + "-fx-font-weight: bold;"
+        + "-fx-text-fill: #FFD700;"
+        + "-fx-background-color: rgba(0, 0, 0, 0.50);"
+        + "-fx-background-radius: 7px;"
+        + "-fx-padding: 5px 10px;"
+    );
+
+    bankrollLabel.setMinWidth(
+        100
+    );
+
+    bankrollLabel.setWrapText(
+        false
+    );
+
+    bankrollLabel.setAlignment(
+        Pos.CENTER
+    );
+  }
+  
+  public void setPrimaryStage(Stage primaryStage)
+  {
+    this.primaryStage = primaryStage;
+  }
+  
+  public void setFeltColor(GameSettings.FeltColor feltColor)
   {
     String image;
   

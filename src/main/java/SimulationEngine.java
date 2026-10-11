@@ -124,7 +124,8 @@ public class SimulationEngine
                 public void handFinished(
                     PlayerHandState state,
                     int index,
-                    int handCount)
+                    int handCount,
+                    HandFinishReason reason)
                 {
                 }
               }

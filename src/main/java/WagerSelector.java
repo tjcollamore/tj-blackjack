@@ -7,6 +7,7 @@ import javafx.scene.paint.Color;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.Duration;
+import java.util.function.IntConsumer;
 
 public class WagerSelector extends VBox
 {
@@ -22,6 +23,7 @@ public class WagerSelector extends VBox
 
     private Timeline repeatTimeline;
     private Timeline repeatDelay;
+    private IntConsumer onWagerChanged;
     
     public WagerSelector(int minWager, int maxWager)
     {
@@ -90,11 +92,21 @@ public class WagerSelector extends VBox
         updateDisplay();
     }
 
+    public void setOnWagerChanged(IntConsumer listener)
+    {
+      this.onWagerChanged = listener;
+    }
+    
     private void updateDisplay()
     {
         updateAmountLabel();
         minusButton.setDisable(wager <= minWager);
         plusButton.setDisable(wager >= maxWager);
+
+        if (onWagerChanged != null)
+        {
+          onWagerChanged.accept(wager);
+        }
     }
     
     private void updateAmountLabel()

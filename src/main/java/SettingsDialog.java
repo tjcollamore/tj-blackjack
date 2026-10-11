@@ -241,8 +241,35 @@ public class SettingsDialog
     root.setPadding(new Insets(25));
     root.setStyle("-fx-background-color: #161616;");
 
-    Scene scene = new Scene(root, 360, 540);
-    settingsStage.setScene(scene);
+  Scene scene =
+    new Scene(
+        root,
+        360,
+        540
+    );
+
+    settingsStage.setScene(
+      scene
+    );
+
+    settingsStage.setOnShown(e ->
+    {
+      double x =
+          owner.getX()
+          + (owner.getWidth()
+             - settingsStage.getWidth())
+            / 2.0;
+  
+      double y =
+          owner.getY()
+          + (owner.getHeight()
+             - settingsStage.getHeight())
+            / 2.0;
+  
+      settingsStage.setX(x);
+      settingsStage.setY(y);
+    });
+
     settingsStage.showAndWait();
   }
 }
