@@ -21,7 +21,8 @@ import javafx.util.Duration;
 public class ChoiceDialog {
 
     private static final double ACTION_BAR_HEIGHT = 57;
-
+    private static final double ACTION_BAR_RADIUS = 10;
+    
 /*    
     public static String showOptions(
         Stage ownerStage,
@@ -152,15 +153,31 @@ public class ChoiceDialog {
         buttonBar.setMinHeight(ACTION_BAR_HEIGHT);
         buttonBar.setPrefHeight(ACTION_BAR_HEIGHT);
         buttonBar.setMaxHeight(ACTION_BAR_HEIGHT);
-        
-        buttonBar.setBackground(new Background(
-            new BackgroundFill(
-                Color.rgb(40, 40, 40, 0.95),
-                CornerRadii.EMPTY,
-                Insets.EMPTY
-            )
-        ));
 
+        
+        CornerRadii actionBarRadii =
+            new CornerRadii(
+                0,                  // top-left
+                0,                  // top-right
+                ACTION_BAR_RADIUS,  // bottom-right
+                ACTION_BAR_RADIUS,  // bottom-left
+                false
+            );
+        buttonBar.setBackground(
+            new Background(
+                new BackgroundFill(
+                    Color.rgb(
+                        40,
+                        40,
+                        40,
+                        0.95
+                    ),
+                    actionBarRadii,
+                    Insets.EMPTY
+                )
+            )
+        );
+        
         buttonBar.setMaxWidth(Double.MAX_VALUE);
         VBox.setVgrow(buttonBar, Priority.NEVER);
 
@@ -277,12 +294,13 @@ public class ChoiceDialog {
         }
         // Outer wrapper to dock to bottom only
         VBox root = new VBox();
+        root.setBackground(Background.EMPTY);
         root.setAlignment(Pos.BOTTOM_CENTER);
         root.setPadding(new Insets(0, 0, 0, 0)); // Fine-tuned vertical padding
 //        root.setBackground(Background.EMPTY);
-        root.setBackground(new Background(
-            new BackgroundFill(Color.rgb(40, 40, 40, 0.95), CornerRadii.EMPTY, Insets.EMPTY)
-        ));
+//        root.setBackground(new Background(
+   //         new BackgroundFill(Color.rgb(40, 40, 40, 0.95), //CornerRadii.EMPTY, Insets.EMPTY)
+//        ));
         root.getChildren().add(buttonBar);
 
         // Only use root in the Scene (no StackPane wrapper)
@@ -485,15 +503,34 @@ public class ChoiceDialog {
         Stage dialogStage,
         Stage ownerStage)
     {
-        dialogStage.setWidth(ownerStage.getWidth());
-        dialogStage.setHeight(ACTION_BAR_HEIGHT);
+      double contentWidth =
+          ownerStage
+              .getScene()
+              .getWidth();
 
-        dialogStage.setX(ownerStage.getX());
-        dialogStage.setY(
-            ownerStage.getY()
-            + ownerStage.getHeight()
-            - ACTION_BAR_HEIGHT
-        );
+      double horizontalInset =
+          (ownerStage.getWidth()
+           - contentWidth)
+          / 2.0;
+
+      dialogStage.setWidth(
+          contentWidth
+      );
+
+      dialogStage.setHeight(
+          ACTION_BAR_HEIGHT
+      );
+
+      dialogStage.setX(
+          ownerStage.getX()
+          + horizontalInset
+      );
+
+      dialogStage.setY(
+          ownerStage.getY()
+          + ownerStage.getHeight()
+          - ACTION_BAR_HEIGHT
+      );
     }
     
     private static void applyButtonStyles(Button button, String baseColor, String focusColor) {

@@ -2,10 +2,10 @@ import javafx.scene.paint.Color;
 
 public enum Suit
 {
-  HEARTS("Hearts", Color.RED, "\u2665\uFE0F"),
-  SPADES("Spades", Color.BLACK, "\u2660\uFE0F"),
-  DIAMONDS("Diamonds", Color.RED, "\u2666\uFE0F"),
-  CLUBS("Clubs", Color.BLACK, "\u2663\uFE0F");
+  HEARTS("Hearts", Color.RED, "\u2665"),
+  SPADES("Spades", Color.BLACK, "\u2660"),
+  DIAMONDS("Diamonds", Color.RED, "\u2666"),
+  CLUBS("Clubs", Color.BLACK, "\u2663");
   
   private String name;
   private Color color;

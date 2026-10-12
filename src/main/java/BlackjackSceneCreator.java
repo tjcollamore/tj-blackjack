@@ -13,6 +13,7 @@ import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import javafx.scene.shape.Ellipse;
 import java.util.*;
+import javafx.scene.image.Image;
 
 public class BlackjackSceneCreator 
 {
@@ -35,7 +36,15 @@ public class BlackjackSceneCreator
   private final ScoreBadge playerScoreBadge = new ScoreBadge();
   private final ScoreBadge dealerScoreBadge = new ScoreBadge();
   private BorderPane root;
-  private final ImageView gearIcon = new ImageView("file:src/main/resources/gear.png");
+  private final ImageView gearIcon =
+    new ImageView(
+        new Image(
+            BlackjackSceneCreator.class
+                .getResourceAsStream(
+                    "/gear.png"
+                )
+        )
+    );
   private GameSettings settings;
   private Ellipse wagerSpot = new Ellipse(58, 40);
   private StackPane wagerArea;
@@ -507,7 +516,7 @@ public class BlackjackSceneCreator
         "-fx-font-size: 14px;"
         + "-fx-font-weight: bold;"
         + "-fx-text-fill: #FFD700;"
-        + "-fx-background-color: transparent"
+        + "-fx-background-color: transparent;"
         + "-fx-background-radius: 7px;"
         + "-fx-padding: 5px 10px;"
     );

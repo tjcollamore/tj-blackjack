@@ -125,15 +125,17 @@ public class HandSignalAnimator
     }
     
 
-  private Image loadGesture(
-      String filename)
-  {
-    return new Image(
-        "file:src/main/resources/"
-        + filename
-    );
-  }
-
+    private Image loadGesture(
+        String filename)
+    {
+      return new Image(
+          HandSignalAnimator.class
+              .getResourceAsStream(
+                  "/" + filename
+              )
+      );
+    }
+    
 
   private void showGesture(
       Image image,
