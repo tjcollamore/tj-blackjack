@@ -19,7 +19,7 @@ jobs:
           cache: maven
 
       - name: Build Blackjack
-        run: mvn -B clean package -DskipTests
+        run: mvn -B clean package -Dmaven.test.skip=true
 
       - name: Create packaging directory
         shell: pwsh
