@@ -39,7 +39,7 @@ jobs:
             --name "TJ's Blackjack" \
             --input target/package-input \
             --main-jar blackjack-1.0-SNAPSHOT.jar \
-            --main-class Main \
+            --main-class Launcher \
             --app-version 1.0.0 \
             --dest dist
 
