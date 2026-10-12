@@ -40,7 +40,7 @@ jobs:
             --input target/package-input \
             --main-jar blackjack-1.0-SNAPSHOT.jar \
             --main-class Main \
-            --app-version 0.1.0 \
+            --app-version 1.0.0 \
             --dest dist
 
       - name: Zip macOS app
