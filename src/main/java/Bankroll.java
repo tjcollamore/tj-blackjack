@@ -57,7 +57,7 @@ public class Bankroll
       if (bankroll < tableMinBet)
       {
         outputter.output("You do not have funds. Withdrawing another " + getFormattedCurrency(amount)  + " from the ATM.");
-        ChoiceDialog.showWithMessage(stage, "You do not have funds.\nWithdrawing another " + getFormattedCurrency(amount) + " from the ATM (minus a " + getFormattedCurrency(atmFee) + " bank fee).", MessageTone.NEGATIVE, "OK");
+        ChoiceDialog.showWithMessageAndHighlightedOption(stage, "You do not have funds.\nWithdrawing another " + getFormattedCurrency(amount) + " from the ATM (minus a " + getFormattedCurrency(atmFee) + " bank fee).", MessageTone.NEGATIVE, "OK", "OK");
         deposit(amount - atmFee);
       }
     }

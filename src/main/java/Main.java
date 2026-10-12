@@ -32,6 +32,7 @@ public class Main extends Application
   {
     IOutputter outputter = new ConsoleOutputter();
     Shoe shoe = null;
+    int lastDeckSetting = settings.getDecksInShoe();
     HandStrategy playerHandStrategy = new PlayerInteractiveHandStrategy(stage);
 
     Bankroll bankroll = new Bankroll(GameOptions.STARTING_BANKROLL, sceneCreator.getBankrollLabel(), sceneCreator.getBankrollChipView(), outputter);
@@ -87,9 +88,9 @@ public class Main extends Application
         selectedWager
       );
       
-      String choice = ChoiceDialog.showActionBar(stage,
+      String choice = ChoiceDialog.showActionBarWithHighlightedOption(stage,
           sceneCreator.getGearIcon(),
-          wagerSelector, "DEAL", "COLOR UP");
+          wagerSelector, "DEAL", "DEAL", "COLOR UP");
 
       if (choice.equals("COLOR UP"))
       {
@@ -116,9 +117,27 @@ public class Main extends Application
       sceneCreator.getDealerScoreBadge().setVisible(false);
       sceneCreator.getPlayerScoreBadge().setVisible(false);
 
-      if (shoe == null)
+      int currentDeckSetting = settings.getDecksInShoe();
+      boolean deckSettingChanged = currentDeckSetting != lastDeckSetting;
+
+      if (shoe == null || shoe.getDeckCount() != currentDeckSetting)
       {
-        shoe = new Shoe(settings.getDecksInShoe());
+        shoe = new Shoe(currentDeckSetting);
+
+        if (deckSettingChanged)
+        {
+          outputter.output("Deck count changed. Starting new shoe...");
+  
+          ChoiceDialog.showGameMessage(
+              stage,
+              "Deck count changed. Shuffling new "
+              + shoe.getDeckCount()
+              + "-DECK SHOE.",
+              MessageTone.DEFAULT
+          );
+        }
+  
+        lastDeckSetting = currentDeckSetting;
       }
       
       Round round = new Round(stage, sceneCreator, outputter, shoe, playerHandStrategy, betAmount, bankroll, settings);

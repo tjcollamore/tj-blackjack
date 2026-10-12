@@ -68,7 +68,7 @@ public class RoundResultAnalyzer
         if (dealerHand.isBlackjack())
           message = "DEALER BLACKJACK!";
         else if (playerHand.isBusted())
-          message = "BUSTED!";
+          message = "   BUSTED!   ";  // Cover up felt "DEALER PAYS 3:2"
         else
           message = "Dealer Wins";
 

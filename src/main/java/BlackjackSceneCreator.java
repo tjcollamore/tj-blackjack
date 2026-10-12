@@ -22,6 +22,9 @@ public class BlackjackSceneCreator
   private HBox dealerCards = new HBox(10);
   private HBox playerCards = new HBox(10);
   private Label bankrollLabel = new Label();
+  private Label tableRuleTop = new Label();
+  private Label tableRuleBottom = new Label();
+  private VBox tableRules;
   private ChipStackView bankrollChipView = new ChipStackView();
   private ChipStackView wagerChipView = new ChipStackView();
   private ChipStackView wagerPreviewChipView = new ChipStackView();
@@ -37,7 +40,8 @@ public class BlackjackSceneCreator
   private Ellipse wagerSpot = new Ellipse(58, 40);
   private StackPane wagerArea;
   private VBox wagerPreviewArea;
-
+  private Pane trainingOverlay = new Pane();
+  
   public BlackjackSceneCreator(GameSettings settings)
   {
     this.settings = settings;
@@ -52,6 +56,15 @@ public class BlackjackSceneCreator
     StackPane layeredPane = new StackPane();
     Scene scene = new Scene(layeredPane, 500, 760);
 
+    trainingOverlay.setMouseTransparent(true);
+    trainingOverlay.setPickOnBounds(false);
+
+    trainingOverlay.prefWidthProperty()
+      .bind(layeredPane.widthProperty());
+
+    trainingOverlay.prefHeightProperty()
+      .bind(layeredPane.heightProperty());
+    
     root = new BorderPane();
     root.setStyle("-fx-background-repeat: repeat;" +
                   "-fx-background-size: auto;" +
@@ -60,6 +73,7 @@ public class BlackjackSceneCreator
     setFeltColor(settings.getFeltColor());
 
     layeredPane.getChildren().add(root);
+    layeredPane.getChildren().add(trainingOverlay);
 
     // Discard pile upper right
     discardOverlay.setStyle(
@@ -196,6 +210,8 @@ public class BlackjackSceneCreator
     playerStack.getChildren().add(subroundBadge);
     playerStack.setMaxWidth(Double.MAX_VALUE);
 
+
+    
     wagerChipView.setAmount(0, ChipDisplayMode.WAGER);
 
     wagerSpot.setFill(Color.rgb(255, 255, 255, 0.035));
@@ -286,10 +302,29 @@ public class BlackjackSceneCreator
     HBox.setHgrow(leftPanel, Priority.NEVER);
     HBox.setHgrow(tableCenter, Priority.ALWAYS);
 
-    StackPane centeredWrapper = new StackPane(mainContent);
-    StackPane.setAlignment(mainContent, Pos.CENTER);
-    root.setCenter(centeredWrapper);
+    tableRules =
+      createTableRules();
 
+    StackPane centeredWrapper =
+      new StackPane(
+          tableRules,
+          mainContent
+      );
+
+    StackPane.setAlignment(
+      tableRules,
+      Pos.CENTER
+    );
+
+    StackPane.setAlignment(
+      mainContent,
+      Pos.CENTER
+    );
+
+    root.setCenter(
+      centeredWrapper
+    );
+    
     gearIcon.setFitWidth(20);
     gearIcon.setFitHeight(20);
     gearIcon.setPreserveRatio(true);
@@ -324,6 +359,61 @@ public class BlackjackSceneCreator
     return scene;
   }
 
+  private VBox createTableRules()
+  {
+    tableRuleTop.setStyle(
+        "-fx-font-size: 15px;"
+        + "-fx-font-weight: bold;"
+        + "-fx-text-fill: rgba(255, 215, 0, 0.55);"
+    );
+
+    tableRuleBottom.setStyle(
+        "-fx-font-size: 11px;"
+        + "-fx-font-weight: bold;"
+        + "-fx-text-fill: rgba(255, 255, 255, 0.45);"
+    );
+
+    VBox rules =
+        new VBox(
+            2,
+            tableRuleTop,
+            tableRuleBottom
+        );
+
+    rules.setAlignment(
+        Pos.CENTER
+    );
+
+    rules.setMouseTransparent(
+        true
+    );
+
+    rules.setTranslateY(
+        -118
+    );
+
+    updateTableRules();
+
+    return rules;
+  }
+
+  public void updateTableRules()
+  {
+    tableRuleTop.setText(
+        "BLACKJACK PAYS "
+        + (settings.getBlackjackPayout()
+            == GameSettings.BlackjackPayout.THREE_TO_TWO
+            ? "3 TO 2"
+            : "6 TO 5")
+    );
+
+    tableRuleBottom.setText(
+        settings.dealerHitsSoft17()
+            ? "DEALER HITS SOFT 17"
+            : "DEALER STANDS ON ALL 17s"
+    );
+  }
+  
   public Node getShoeAnchor()
   {
     return shoeOverlay;
@@ -382,6 +472,11 @@ public class BlackjackSceneCreator
     return wagerPreviewChipView;
   }
   
+  public Pane getTrainingOverlay()
+  {
+    return trainingOverlay;
+  }
+  
   public Label getBankrollLabel() 
   {
     return bankrollLabel;
@@ -412,7 +507,7 @@ public class BlackjackSceneCreator
         "-fx-font-size: 14px;"
         + "-fx-font-weight: bold;"
         + "-fx-text-fill: #FFD700;"
-        + "-fx-background-color: rgba(0, 0, 0, 0.50);"
+        + "-fx-background-color: transparent"
         + "-fx-background-radius: 7px;"
         + "-fx-padding: 5px 10px;"
     );

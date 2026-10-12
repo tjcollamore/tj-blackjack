@@ -113,10 +113,13 @@ public class SettingsDialog
     hitSoft17CheckBox.setStyle("-fx-text-fill: white;");
     
     hitSoft17CheckBox.setOnAction(e ->
+    {
       settings.setDealerHitsSoft17(
           hitSoft17CheckBox.isSelected()
-      )
-    );
+      );
+      sceneCreator.updateTableRules();
+    });
+    
     switch (settings.getDecksInShoe())
     {
         case 1:
@@ -167,16 +170,22 @@ public class SettingsDialog
         threeToTwoButton.setSelected(true);
 
     sixToFiveButton.setOnAction(e ->
+    {
       settings.setBlackjackPayout(
           GameSettings.BlackjackPayout.SIX_TO_FIVE
-      )
-    );
+      );
+      sceneCreator.updateTableRules();
+    });
     
     threeToTwoButton.setOnAction(e ->
+    {
       settings.setBlackjackPayout(
           GameSettings.BlackjackPayout.THREE_TO_TWO
-      )
-    );
+      );
+
+      sceneCreator.updateTableRules();
+    });
+    
     HBox payoutButtons = new HBox(12, sixToFiveButton, threeToTwoButton);
     payoutButtons.setAlignment(Pos.CENTER);
           
@@ -209,7 +218,7 @@ public class SettingsDialog
 
 
     CheckBox coachingCheckBox =
-      new CheckBox("Hints / Coaching");
+      new CheckBox("Highlight Basic Strategy");
 
     coachingCheckBox.setSelected(
       settings.coachingEnabled()
@@ -232,10 +241,30 @@ public class SettingsDialog
       "-fx-font-weight: bold;" +
       "-fx-text-fill: white;"
     );
+
+    CheckBox handSignalsCheckBox =
+      new CheckBox(
+          "Show Hand Signals"
+      );
+
+    handSignalsCheckBox.setSelected(
+      settings.handSignalsEnabled()
+    );
+
+    handSignalsCheckBox.setStyle(
+      "-fx-text-fill: white;"
+    );
+
+    handSignalsCheckBox.setOnAction(e ->
+      settings.setHandSignalsEnabled(
+          handSignalsCheckBox.isSelected()
+      )
+    );
+    
     
 
     
-    VBox root = new VBox(18, title, feltLabel, feltButtons, rulesLabel, doubleAfterSplitCheckBox, surrenderCheckBox, hitSoft17CheckBox, blackjackPayoutLabel, payoutButtons, decksLabel, deckButtons, trainingLabel, coachingCheckBox, closeButton);
+    VBox root = new VBox(18, title, feltLabel, feltButtons, rulesLabel, doubleAfterSplitCheckBox, surrenderCheckBox, hitSoft17CheckBox, blackjackPayoutLabel, payoutButtons, decksLabel, deckButtons, trainingLabel, coachingCheckBox, handSignalsCheckBox, closeButton);
     
     root.setAlignment(Pos.CENTER);
     root.setPadding(new Insets(25));
@@ -245,7 +274,7 @@ public class SettingsDialog
     new Scene(
         root,
         360,
-        540
+        570
     );
 
     settingsStage.setScene(

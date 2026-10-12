@@ -26,8 +26,7 @@ public class PlayerInteractiveHandStrategy implements HandStrategy
 
     String highlightedOption = null;
 
-    if (context.getSettings().coachingEnabled()
-        && context.getDeckCount() >= 6)
+    if (context.getSettings().coachingEnabled())
     {
       HandAction recommendation =
           coachingStrategy.chooseAction(context);

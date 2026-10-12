@@ -4,7 +4,19 @@ public class GameSettings
   private boolean doubleAfterSplit = true;
   private boolean surrenderAfterSplit = false;
   private boolean coachingEnabled = false;
+  private boolean handSignalsEnabled = false;
 
+  public boolean handSignalsEnabled()
+  {
+    return handSignalsEnabled;
+  }
+
+  public void setHandSignalsEnabled(
+      boolean enabled)
+  {
+    handSignalsEnabled = enabled;
+  }
+  
   public boolean coachingEnabled()
   {
     return coachingEnabled;

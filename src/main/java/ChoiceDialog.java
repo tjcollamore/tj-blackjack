@@ -81,6 +81,59 @@ public class ChoiceDialog {
             options
         );
     }
+
+    public static String showWithMessageAndHighlightedOption(
+        Stage ownerStage,
+        String message,
+        MessageTone messageTone,
+        String highlightedOption,
+        String... options)
+    {
+      return showInternal(
+          ownerStage,
+          message,
+          messageTone,
+          highlightedOption,
+          null,
+          null,
+          options
+      );
+    }
+    
+    public static String showActionBarWithHighlightedOption(
+        Stage ownerStage,
+        Node leftAccessory,
+        Node leadingContent,
+        String highlightedOption,
+        String... options)
+    {
+      return showInternal(
+          ownerStage,
+          "",
+          MessageTone.DEFAULT,
+          highlightedOption,
+          leftAccessory,
+          leadingContent,
+          options
+      );
+    }
+    
+    public static String showWithLeadingContentAndHighlightedOption(
+        Stage ownerStage,
+        Node leadingContent,
+        String highlightedOption,
+        String... options)
+    {
+      return showInternal(
+          ownerStage,
+          "",
+          MessageTone.DEFAULT,
+          highlightedOption,
+          null,
+          leadingContent,
+          options
+      );
+    }
     
     private static String showInternal(
         Stage ownerStage,
@@ -192,19 +245,9 @@ public class ChoiceDialog {
             Button btn = new Button(originalLabel);
             btn.setPrefWidth(100);
 
-            boolean isPrimary;
-
-            if (highlightedOption != null)
-            {
-                isPrimary =
-                    originalLabel.equals(highlightedOption);
-            }
-            else
-            {
-                // Preserve old behavior:
-                // first button is blue.
-                isPrimary = (i == 0);
-            }
+            boolean isPrimary =
+                highlightedOption != null
+                && originalLabel.equals(highlightedOption);
 
             String baseColor =
                 isPrimary ? "#007bff" : "#6c757d";

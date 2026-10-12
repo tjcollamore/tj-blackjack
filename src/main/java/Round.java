@@ -14,6 +14,7 @@ public class Round
   private int betAmount;
   private Bankroll bankroll;
   private TableAnimator tableAnimator;
+  private HandSignalAnimator handSignalAnimator;
   private GameSettings settings;
   private Map<Hand, HandView> handViews = new IdentityHashMap<>();
   private DealerPlayEngine dealerPlayEngine;
@@ -30,6 +31,7 @@ public class Round
     this.betAmount = betAmount;
     this.bankroll = bankroll;
     this.tableAnimator = new TableAnimator(sceneCreator);
+    this.handSignalAnimator = new HandSignalAnimator(sceneCreator.getTrainingOverlay(), sceneCreator.getWagerArea());
     this.settings = settings;
     this.dealerPlayEngine = new DealerPlayEngine(settings);
     this.playerRoundEngine = new PlayerRoundEngine(settings);
@@ -76,7 +78,7 @@ public class Round
     Card playerCard2 = shoe.drawCard();
     
     //Testing: always split
-       while (playerCard1.getRank().getValue() != playerCard2.getRank().getValue()) playerCard2 = shoe.drawCard();
+//       while (playerCard1.getRank().getValue() != playerCard2.getRank().getValue()) playerCard2 = shoe.drawCard();
     
     firstPlayerHand.addCard(playerCard2);
     CardView playerCardView2 = firstPlayerHandView.cardAdded(firstPlayerHand, playerCard2);
@@ -98,10 +100,33 @@ public class Round
     }
     else
     {
+      HandStrategy signalingStrategy =
+        context ->
+        {
+          HandAction action =
+              playerHandStrategy.chooseAction(
+                  context
+              );
+
+          if (settings.handSignalsEnabled())
+          {
+            Duration gestureDuration =
+                handSignalAnimator.show(
+                    action
+                );
+
+            tableAnimator.pause(
+                gestureDuration
+            );
+          }
+
+          return action;
+        };
+      
       playerRoundEngine.play(
           initialState,
           dealerCard1,
-          playerHandStrategy,
+          signalingStrategy,
           shoe,
           new PlayerRoundListener()
           {
@@ -472,9 +497,10 @@ public class Round
     // Always begin review on the first hand.
     showReviewSubround(subrounds, 0);
 
-    ChoiceDialog.showWithLeadingContent(
+    ChoiceDialog.showWithLeadingContentAndHighlightedOption(
         stage,
         reviewNavigator,
+        "DONE",
         "DONE"
     );
   }

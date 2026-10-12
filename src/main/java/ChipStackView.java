@@ -220,8 +220,15 @@ public class ChipStackView extends VBox
     int originalCents =
         cents;
 
-
-    /*
+    int pinkCount = 0;
+    
+    if (cents % 100 == 50)
+    {
+        pinkCount = 1;
+        cents -= WagerChip.PINK.getCentValue();
+    }
+    
+        /*
      * Start by expressing the bankroll primarily
      * as normal working chips.
      */
@@ -241,18 +248,11 @@ public class ChipStackView extends VBox
         WagerChip.RED.getCentValue();
 
 
-    int pinkCount =
-        cents
-        / WagerChip.PINK.getCentValue();
-
-    cents %=
-        WagerChip.PINK.getCentValue();
-
-
-    int whiteCount =
-        cents
-        / WagerChip.WHITE.getCentValue();
-
+  
+      int whiteCount =
+          cents
+          / WagerChip.WHITE.getCentValue();
+          
 
     int blackCount = 0;
     int purpleCount = 0;
@@ -393,46 +393,69 @@ public class ChipStackView extends VBox
   }
 
 
-  /*
-   * Color Up intentionally does the opposite.
-   *
-   * The player is leaving, so use the largest
-   * possible denominations.
-   */
-  private List<ChipPile> getColorUpComposition(
-      int cents)
-  {
-    List<ChipPile> piles =
-        new ArrayList<>();
-
-    for (WagerChip chip :
-         List.of(
-             WagerChip.ORANGE,
-             WagerChip.PURPLE,
-             WagerChip.BLACK,
-             WagerChip.GREEN,
-             WagerChip.RED,
-             WagerChip.PINK,
-             WagerChip.WHITE
-         ))
+    private List<ChipPile> getColorUpComposition(
+        int cents)
     {
-      int count =
-          cents
-          / chip.getCentValue();
+      List<ChipPile> piles =
+          new ArrayList<>();
 
-      cents %=
-          chip.getCentValue();
+      /*
+       * Pink chips are the only denomination
+       * that can represent a 50-cent remainder.
+       *
+       * If the bankroll ends in .50, reserve
+       * exactly one $2.50 chip first.
+       */
+      int pinkCount = 0;
 
+      if (cents % 100 == 50)
+      {
+        pinkCount = 1;
+        cents -= WagerChip.PINK.getCentValue();
+      }
+
+      /*
+       * Everything left is now an exact
+       * whole-dollar amount, so color it up
+       * normally using the largest chips.
+       */
+      for (WagerChip chip :
+           List.of(
+               WagerChip.ORANGE,
+               WagerChip.PURPLE,
+               WagerChip.BLACK,
+               WagerChip.GREEN,
+               WagerChip.RED,
+               WagerChip.WHITE
+           ))
+      {
+        int count =
+            cents
+            / chip.getCentValue();
+
+        cents %=
+            chip.getCentValue();
+
+        addPiles(
+            piles,
+            chip,
+            count
+        );
+      }
+
+      /*
+       * Add the pink pile at the end with
+       * the other small denominations.
+       */
       addPiles(
           piles,
-          chip,
-          count
+          WagerChip.PINK,
+          pinkCount
       );
+
+      return piles;
     }
-
-    return piles;
-  }
-
+    
 
   /*
    * Splits large quantities into physical piles.
