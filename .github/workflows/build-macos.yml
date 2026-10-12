@@ -41,6 +41,8 @@ jobs:
             --main-jar blackjack-1.0-SNAPSHOT.jar \
             --main-class Launcher \
             --app-version 1.0.0 \
+            --mac-package-identifier com.tjcollamore.blackjack \
+            --mac-package-name "TJ's Blackjack" \
             --dest dist
 
       - name: Zip macOS app
