@@ -19,12 +19,11 @@ public class DecisionHelpDialog
   {
     final HandAction[] acceptedAction =
           { null };
-          
-    BasicStrategy basicStrategy =
-        new BasicStrategy();
 
     HandAction recommendation =
-        basicStrategy.chooseRecommendedAction(context);
+        getRecommendedAction(
+            context
+        );
 
 
     Button acceptButton =
@@ -39,19 +38,19 @@ public class DecisionHelpDialog
       -fx-background-radius: 4px;
       -fx-padding: 8px 16px;
     """);
-      
+
     acceptButton.setDisable(
       !context.isAvailable(recommendation)
     );
-    
+
     acceptButton.setVisible(
       context.isAvailable(recommendation)
     );
-    
+
     acceptButton.setManaged(
       context.isAvailable(recommendation)
     );
-          
+
     Label title =
         new Label("DECISION HELP");
 
@@ -139,11 +138,32 @@ public class DecisionHelpDialog
       playerArea.setAlignment(
           Pos.CENTER
       );
+
+      StrategyDeviation deviation =
+          null;
+
+      boolean showDeviation =
+          context.getSettings()
+              .getStrategyMode()
+              == StrategyMode.SOCIAL;
+
+      if (showDeviation)
+      {
+        deviation =
+            StrategyDeviationCatalog.find(
+                context
+            );
+      }
       
     Label recommendationLabel =
         new Label(
-            "Basic Strategy: "
-            + getActionName(recommendation)
+            getStrategyName(
+                context
+            )
+            + ": "
+            + getActionName(
+                recommendation
+            )
         );
 
     recommendationLabel.setStyle("""
@@ -152,14 +172,77 @@ public class DecisionHelpDialog
         -fx-text-fill: #339af0;
     """);
 
+      StrategyGuidance guidance =
+          getStrategyGuidance(
+              context
+          );
+
+      VBox guidanceArea =
+          new VBox(4);
+
+      guidanceArea.setAlignment(
+          Pos.CENTER
+      );
+
+      VBox deviationArea =
+          createDeviationArea(
+              context
+          );
+      
+      if (guidance != null)
+      {
+        Label ruleLabel =
+            new Label(
+                guidance.getRule()
+            );
+
+        ruleLabel.setStyle("""
+            -fx-font-size: 13px;
+            -fx-font-weight: bold;
+            -fx-text-fill: white;
+        """);
+
+        ruleLabel.setWrapText(true);
+        ruleLabel.setMaxWidth(290);
+        ruleLabel.setAlignment(
+            Pos.CENTER
+        );
+
+        Label explanationLabel =
+            new Label(
+                guidance.getExplanation()
+            );
+
+        explanationLabel.setStyle("""
+            -fx-font-size: 12px;
+            -fx-text-fill: #bbbbbb;
+        """);
+
+        explanationLabel.setWrapText(true);
+        explanationLabel.setMaxWidth(290);
+        explanationLabel.setAlignment(
+            Pos.CENTER
+        );
+
+        guidanceArea.getChildren().addAll(
+            ruleLabel,
+            explanationLabel
+        );
+      }
+      else
+      {
+        guidanceArea.setVisible(false);
+        guidanceArea.setManaged(false);
+      }
+      
     Label availabilityLabel = new Label();
-    
+
     if (!context.isAvailable(recommendation))
     {
       availabilityLabel.setText(
         recommendation.getDisplayText()
         + " is unavailable because your bankroll is too low.");
-    
+
       availabilityLabel.setStyle("""
         -fx-text-fill: #f0c674;
         -fx-font-size: 13px;
@@ -174,17 +257,17 @@ public class DecisionHelpDialog
       availabilityLabel.setVisible(false);
       availabilityLabel.setManaged(false);
     }
-    
+
     VBox simulationResults =
       new VBox(8);
-    
+
     simulationResults.setAlignment(
       Pos.CENTER
     );
-    
+
     simulationResults.setVisible(false);
     simulationResults.setManaged(false);
-          
+
     Button closeButton = new Button("CLOSE");
 
     HBox bottomButtons =
@@ -193,18 +276,55 @@ public class DecisionHelpDialog
           acceptButton,
           closeButton
       );
-    
+
     bottomButtons.setAlignment(
       Pos.CENTER
     );
-      
-      
+
+      Node handsArea;
+
+      if (deviation != null)
+      {
+          dealerArea.setSpacing(3);
+          playerArea.setSpacing(3);
+        HBox compactHands =
+            new HBox(
+                36,
+                dealerArea,
+                playerArea
+            );
+
+        compactHands.setAlignment(
+            Pos.CENTER
+        );
+
+        handsArea =
+            compactHands;
+      }
+      else
+      {
+        VBox stackedHands =
+            new VBox(
+                12,
+                dealerArea,
+                playerArea
+            );
+
+        stackedHands.setAlignment(
+            Pos.CENTER
+        );
+
+        handsArea =
+            stackedHands;
+      }
+
       VBox centerContent =
           new VBox(
-              12,
-              dealerArea,
-              playerArea,
+              10,
+              handsArea,
               recommendationLabel,
+              guidanceArea,
+              deviationArea,
               availabilityLabel,
               simulationResults
           );
@@ -249,7 +369,7 @@ public class DecisionHelpDialog
       root.setStyle("""
           -fx-background-color: #282828;
       """);
-      
+
     Stage dialog = new Stage();
     dialog.initOwner(ownerStage);
     dialog.initModality(Modality.APPLICATION_MODAL);
@@ -264,11 +384,11 @@ public class DecisionHelpDialog
             recommendation,
             simulationResults
         );
-        
+
         simulationResults.setVisible(true);
         simulationResults.setManaged(true);
     }
-        
+
     closeButton.setOnAction(e ->
         dialog.close()
     );
@@ -311,9 +431,15 @@ public class DecisionHelpDialog
 
       int trialsPerAction = 10000;
 
+      HandStrategy continuationStrategy =
+          getContinuationStrategy(
+              context
+          );
+
       DecisionAnalysis analysis =
           engine.analyzeDecision(
               context,
+              continuationStrategy,
               trialsPerAction
           );
 
@@ -354,7 +480,7 @@ public class DecisionHelpDialog
         addResultLabel(
             grid, "PUSH", 3, 0, true
         );
-        
+
       int row = 1;
 
       for (HandAction action :
@@ -386,7 +512,214 @@ public class DecisionHelpDialog
       simulationResults.setVisible(true);
       simulationResults.setManaged(true);
     }
+
+    private static VBox createDeviationArea(
+        PlayerDecisionContext context)
+    {
+      VBox area =
+          new VBox(5);
+
+      area.setAlignment(
+          Pos.CENTER
+      );
+
+      /*
+       * Deviation explanations are specifically
+       * about why Social Strategy differs from
+       * perfect Basic Strategy.
+       */
+      if (context.getSettings()
+          .getStrategyMode()
+          != StrategyMode.SOCIAL)
+      {
+        area.setVisible(false);
+        area.setManaged(false);
+
+        return area;
+      }
+
+      StrategyDeviation deviation =
+          StrategyDeviationCatalog.find(
+              context
+          );
+
+      if (deviation == null)
+      {
+        area.setVisible(false);
+        area.setManaged(false);
+
+        return area;
+      }
+
+
+      Label heading =
+          new Label(
+              "WHY SOCIAL DIFFERS"
+          );
+
+      heading.setStyle("""
+          -fx-font-size: 11px;
+          -fx-font-weight: bold;
+          -fx-text-fill: #d4af37;
+      """);
+
+
+      Label comparison =
+          new Label(
+              "Basic: "
+              + getActionName(
+                  deviation.getBasicAction()
+              )
+              + "   •   Social: "
+              + getActionName(
+                  deviation.getSocialAction()
+              )
+          );
+
+      comparison.setStyle("""
+          -fx-font-size: 12px;
+          -fx-font-weight: bold;
+          -fx-text-fill: #dddddd;
+      """);
+
+
+      Label explanation =
+          new Label(
+              deviation.getExplanation()
+          );
+
+      explanation.setStyle("""
+          -fx-font-size: 12px;
+          -fx-text-fill: #cccccc;
+      """);
+
+      explanation.setWrapText(true);
+      explanation.setMaxWidth(310);
+      explanation.setAlignment(
+          Pos.CENTER
+      );
+
+
+      Label evidence =
+          new Label(
+              deviation.getEvidence()
+          );
+
+      evidence.setStyle("""
+          -fx-font-size: 11px;
+          -fx-text-fill: #aaaaaa;
+      """);
+
+      evidence.setWrapText(true);
+      evidence.setMaxWidth(310);
+      evidence.setAlignment(
+          Pos.CENTER
+      );
+
+
+      Label takeaway =
+          new Label(
+              deviation.getTakeaway()
+          );
+
+      takeaway.setStyle("""
+          -fx-font-size: 11px;
+          -fx-font-style: italic;
+          -fx-text-fill: #d4af37;
+      """);
+
+      takeaway.setWrapText(true);
+      takeaway.setMaxWidth(310);
+      takeaway.setAlignment(
+          Pos.CENTER
+      );
+
+
+      area.getChildren().addAll(
+          heading,
+          comparison,
+          explanation,
+          evidence,
+          takeaway
+      );
+
+      area.setStyle("""
+          -fx-background-color: rgba(255, 255, 255, 0.035);
+          -fx-background-radius: 8px;
+          -fx-padding: 8px 10px;
+      """);
+
+      return area;
+    }
     
+    private static StrategyGuidance getStrategyGuidance(
+        PlayerDecisionContext context)
+    {
+      StrategyGuidanceProvider provider =
+          StrategyGuidanceFactory.create(
+              context.getSettings()
+                  .getStrategyMode()
+          );
+
+      return provider.getGuidance(
+          context
+      );
+    }
+    
+  private static HandStrategy getContinuationStrategy(
+      PlayerDecisionContext context)
+  {
+    if (context.getSettings()
+        .getStrategyMode()
+        == StrategyMode.SOCIAL)
+    {
+      return new SocialStrategy();
+    }
+
+    return new BasicStrategy();
+  }
+
+
+  private static HandAction getRecommendedAction(
+      PlayerDecisionContext context)
+  {
+    if (context.getSettings()
+        .getStrategyMode()
+        == StrategyMode.SOCIAL)
+    {
+      SocialStrategy strategy =
+          new SocialStrategy();
+
+      return strategy
+          .chooseRecommendedAction(
+              context
+          );
+    }
+
+    BasicStrategy strategy =
+        new BasicStrategy();
+
+    return strategy
+        .chooseRecommendedAction(
+            context
+        );
+  }
+
+
+  private static String getStrategyName(
+      PlayerDecisionContext context)
+  {
+    if (context.getSettings()
+        .getStrategyMode()
+        == StrategyMode.SOCIAL)
+    {
+      return "Social Strategy";
+    }
+
+    return "Basic Strategy";
+  }
+
+
   private static String getHandDescription(Hand hand)
   {
     if (hand.getNumCards() == 2
@@ -399,7 +732,7 @@ public class DecisionHelpDialog
                 .getShortName()
             + "s";
     }
-          
+
     if (hand.isSoft())
       return "Soft " + hand.getScore();
 
@@ -476,7 +809,7 @@ public class DecisionHelpDialog
           row
       );
     }
-    
+
     private static void addResultRow(
         GridPane grid,
         HandAction action,
@@ -503,7 +836,7 @@ public class DecisionHelpDialog
       {
         evColor = "#dddddd";
       }
-        
+
       String actionText;
 
       if (action == HandAction.SURRENDER)
@@ -566,7 +899,7 @@ public class DecisionHelpDialog
         recommended
     );
     }
-    
+
     private static String formatDollarEv(
         double dollarEv)
     {
@@ -577,7 +910,7 @@ public class DecisionHelpDialog
             dollarEv
         );
       }
-    
+
       return String.format(
           "-$%.2f",
           Math.abs(dollarEv)
@@ -616,5 +949,5 @@ public class DecisionHelpDialog
 
       return action.getDisplayText();
     }
-    
+
 }

@@ -10,12 +10,11 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-
 import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
 import javafx.animation.SequentialTransition;
 import javafx.scene.control.Label;
-
+import javafx.beans.value.ChangeListener;
 import javafx.util.Duration;
 
 public class ChoiceDialog {
@@ -314,6 +313,32 @@ public class ChoiceDialog {
         dialogStage.initOwner(ownerStage);
         dialogStage.setScene(scene);
 
+        ChangeListener<Number> repositionListener =
+            (observable, oldValue, newValue) ->
+                positionActionBar(dialogStage, ownerStage);
+
+        ownerStage.xProperty().addListener(repositionListener);
+        ownerStage.yProperty().addListener(repositionListener);
+        ownerStage.widthProperty().addListener(repositionListener);
+        ownerStage.heightProperty().addListener(repositionListener);
+
+        ownerStage.getScene().widthProperty()
+            .addListener(repositionListener);
+
+        dialogStage.setOnHidden(e ->
+        {
+            ownerStage.xProperty().removeListener(repositionListener);
+            ownerStage.yProperty().removeListener(repositionListener);
+            ownerStage.widthProperty()
+                  .removeListener(repositionListener);      
+            ownerStage.heightProperty()
+                  .removeListener(repositionListener);
+
+            ownerStage.getScene()
+                .widthProperty()
+                .removeListener(repositionListener);
+        });
+        
         // Set an initial position before the stage becomes visible.
         positionActionBar(dialogStage, ownerStage);
 
@@ -421,8 +446,20 @@ public class ChoiceDialog {
         return messageBox;
     }
     
+    public static void showGameMessage(
+        Stage ownerStage,
+        String message,
+        MessageTone messageTone)
+    {
+      showGameMessage(
+          ownerStage,
+          message,
+          messageTone,
+          Duration.seconds(1.65)
+      );
+    }
     
-    public static void showGameMessage(Stage ownerStage, String message, MessageTone messageTone) {
+    public static void showGameMessage(Stage ownerStage, String message, MessageTone messageTone, Duration holdDuration) {
         Color accent = getMessageAccent(messageTone);
 
         Label messageLabel = new Label(message);
@@ -482,7 +519,7 @@ public class ChoiceDialog {
         fadeIn.setToValue(1.0);
 
         PauseTransition hold =
-            new PauseTransition(Duration.seconds(1.65));
+            new PauseTransition(holdDuration);
 
         FadeTransition fadeOut =
             new FadeTransition(Duration.millis(270), messageBox);

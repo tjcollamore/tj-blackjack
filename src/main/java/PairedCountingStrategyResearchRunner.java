@@ -1,0 +1,1931 @@
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+
+public class PairedCountingStrategyResearchRunner
+{
+  /*
+   * Start here. We can increase this after
+   * confirming the runner behaves correctly.
+   */
+  private static final int SESSIONS =
+      250_000;
+
+  private static final int HANDS_PER_SESSION =
+      160;
+
+  private static final double STARTING_BANKROLL =
+      500.0;
+
+  private static final double BASE_BET =
+      25.0;
+
+  private static final double MAX_BET =
+      200.0;
+
+  private static final double ACCEPTABLE_NIGHT_THRESHOLD =
+      400.0;
+
+  private static final long BASE_SEED =
+      10_24_2026L;
+
+  private static final double CI_95_Z =
+      1.96;
+
+
+  private static final Path OUTPUT_FILE =
+      Path.of(
+          "research-data",
+          "scratch",
+          "paired-counting-250k-160hands-500bankroll-1to8.csv"
+      );
+
+
+  public static void main(String[] args)
+      throws IOException
+  {
+    if (Files.exists(OUTPUT_FILE))
+    {
+      throw new IllegalStateException(
+          "Research output already exists: "
+          + OUTPUT_FILE
+      );
+    }
+
+
+    Files.createDirectories(
+        OUTPUT_FILE.getParent()
+    );
+
+
+    writeHeader();
+
+
+    GameSettings settings =
+        createResearchSettings();
+
+
+    Policy[] policies =
+    {
+        Policy.FLAT_BASIC,
+
+        /*
+         * Human-friendly Ace-only hypothesis.
+         */
+        Policy.ACE_MILESTONE_STRICT,
+
+        /*
+         * More mathematical Ace-only versions.
+         *
+         * These let the data tell us whether
+         * true-count-style normalization is
+         * worth the extra mental arithmetic.
+         */
+        Policy.ACE_TRUE_1_0,
+        Policy.ACE_TRUE_1_5,
+
+        /*
+         * Established low-effort benchmark.
+         */
+        Policy.ACE_FIVE
+    };
+
+
+    PolicyAccumulator[] accumulators =
+        new PolicyAccumulator[
+            policies.length
+        ];
+
+
+    for (int i = 0;
+         i < policies.length;
+         i++)
+    {
+      accumulators[i] =
+          new PolicyAccumulator(
+              policies[i]
+          );
+    }
+
+
+    PairAccumulator[] vsFlat =
+        new PairAccumulator[
+            policies.length
+        ];
+
+
+    for (int i = 1;
+         i < policies.length;
+         i++)
+    {
+      vsFlat[i] =
+          new PairAccumulator(
+              policies[i],
+              Policy.FLAT_BASIC
+          );
+    }
+
+
+    PairAccumulator milestoneVsAceFive =
+        new PairAccumulator(
+            Policy.ACE_MILESTONE_STRICT,
+            Policy.ACE_FIVE
+        );
+
+
+    PairAccumulator true10VsAceFive =
+        new PairAccumulator(
+            Policy.ACE_TRUE_1_0,
+            Policy.ACE_FIVE
+        );
+
+
+    PairAccumulator true15VsAceFive =
+        new PairAccumulator(
+            Policy.ACE_TRUE_1_5,
+            Policy.ACE_FIVE
+        );
+
+
+    for (int session = 1;
+         session <= SESSIONS;
+         session++)
+    {
+      long seed =
+          BASE_SEED
+          + session;
+
+
+      SessionState[] states =
+          new SessionState[
+              policies.length
+          ];
+
+
+      for (int i = 0;
+           i < policies.length;
+           i++)
+      {
+        states[i] =
+            playSession(
+                settings,
+                policies[i],
+                seed
+            );
+
+
+        accumulators[i].add(
+            states[i]
+        );
+      }
+
+
+      SessionState flat =
+          states[
+              Policy.FLAT_BASIC.ordinal()
+          ];
+
+
+      for (int i = 1;
+           i < policies.length;
+           i++)
+      {
+        vsFlat[i].add(
+            states[i],
+            flat
+        );
+      }
+
+
+      SessionState aceFive =
+          states[
+              Policy.ACE_FIVE.ordinal()
+          ];
+
+
+      milestoneVsAceFive.add(
+          states[
+              Policy.ACE_MILESTONE_STRICT.ordinal()
+          ],
+          aceFive
+      );
+
+
+      true10VsAceFive.add(
+          states[
+              Policy.ACE_TRUE_1_0.ordinal()
+          ],
+          aceFive
+      );
+
+
+      true15VsAceFive.add(
+          states[
+              Policy.ACE_TRUE_1_5.ordinal()
+          ],
+          aceFive
+      );
+
+
+      if (session % 25_000 == 0)
+      {
+        System.out.println(
+            "Completed "
+            + String.format(
+                Locale.US,
+                "%,d",
+                session
+            )
+            + " paired sessions..."
+        );
+      }
+    }
+
+
+    System.out.println();
+
+    System.out.println(
+        "========================================"
+    );
+
+    System.out.println(
+        "COUNTING STRATEGY RESULTS"
+    );
+
+    System.out.println(
+        "========================================"
+    );
+
+
+    for (PolicyAccumulator accumulator :
+         accumulators)
+    {
+      PolicySummary summary =
+          accumulator.finish();
+
+
+      printPolicySummary(
+          summary
+      );
+
+
+      writePolicySummary(
+          summary
+      );
+    }
+
+
+    System.out.println();
+
+    System.out.println(
+        "========================================"
+    );
+
+    System.out.println(
+        "VS FLAT BASIC"
+    );
+
+    System.out.println(
+        "========================================"
+    );
+
+
+    for (int i = 1;
+         i < policies.length;
+         i++)
+    {
+      printPairSummary(
+          vsFlat[i].finish()
+      );
+    }
+
+
+    System.out.println();
+
+    System.out.println(
+        "========================================"
+    );
+
+    System.out.println(
+        "ACE-ONLY VS ACE/FIVE"
+    );
+
+    System.out.println(
+        "========================================"
+    );
+
+
+    printPairSummary(
+        milestoneVsAceFive.finish()
+    );
+
+
+    printPairSummary(
+        true10VsAceFive.finish()
+    );
+
+
+    printPairSummary(
+        true15VsAceFive.finish()
+    );
+
+
+    System.out.println();
+
+    System.out.println(
+        "Saved results to "
+        + OUTPUT_FILE.toAbsolutePath()
+    );
+  }
+
+
+  // ============================================================
+  // SESSION
+  // ============================================================
+
+  private static SessionState playSession(
+      GameSettings settings,
+      Policy policy,
+      long seed)
+  {
+    double[] bankroll =
+    {
+        STARTING_BANKROLL
+    };
+
+
+    double[] totalInitialWager =
+    {
+        0.0
+    };
+
+
+    double[] totalWagerExposure =
+    {
+        0.0
+    };
+
+
+    long[] minimumBetHands =
+    {
+        0
+    };
+
+
+    long[] bet50Hands =
+    {
+        0
+    };
+
+
+    long[] bet100Hands =
+    {
+        0
+    };
+
+
+    long[] bet200Hands =
+    {
+        0
+    };
+
+
+    double[] maxInitialBet =
+    {
+        0.0
+    };
+
+
+    int handsPlayed =
+        0;
+
+
+    Shoe shoe =
+        new Shoe(
+            settings.getDecksInShoe(),
+            seed
+        );
+
+
+    PlayerRoundEngine playerRoundEngine =
+        new PlayerRoundEngine(
+            settings
+        );
+
+
+    DealerPlayEngine dealerPlayEngine =
+        new DealerPlayEngine(
+            settings
+        );
+
+
+    HandStrategy strategy =
+        new BasicStrategy();
+
+
+    CountingSystem count =
+        createCountingSystem(
+            policy
+        );
+
+
+    /*
+     * Used by the 1-8 betting ramp.
+     *
+     * Favorable:
+     *   25 -> 50 -> 100 -> 200
+     *
+     * Unfavorable:
+     *   immediately back to 25.
+     */
+    double previousBet =
+        BASE_BET;
+
+
+    for (int handNumber = 0;
+         handNumber < HANDS_PER_SESSION;
+         handNumber++)
+    {
+      if (bankroll[0] < BASE_BET)
+      {
+        return createSessionState(
+            policy,
+            bankroll[0],
+            handsPlayed,
+            true,
+            totalInitialWager[0],
+            totalWagerExposure[0],
+            minimumBetHands[0],
+            bet50Hands[0],
+            bet100Hands[0],
+            bet200Hands[0],
+            maxInitialBet[0]
+        );
+      }
+
+
+      if (shoe.needsShuffle())
+      {
+        shoe.shuffle();
+
+
+        if (count != null)
+        {
+          count.reset();
+        }
+
+
+        previousBet =
+            BASE_BET;
+      }
+
+
+      double requestedBet =
+          chooseBet(
+              policy,
+              count,
+              shoe,
+              previousBet
+          );
+
+
+      /*
+       * If the bankroll cannot support the
+       * recommended level, use the highest
+       * standard wager it can support.
+       */
+      double initialBet =
+          capBetToBankroll(
+              requestedBet,
+              bankroll[0]
+          );
+
+
+      previousBet =
+          initialBet;
+
+
+      totalInitialWager[0] +=
+          initialBet;
+
+
+      if (initialBet == 25.0)
+      {
+        minimumBetHands[0]++;
+      }
+      else if (initialBet == 50.0)
+      {
+        bet50Hands[0]++;
+      }
+      else if (initialBet == 100.0)
+      {
+        bet100Hands[0]++;
+      }
+      else if (initialBet == 200.0)
+      {
+        bet200Hands[0]++;
+      }
+
+
+      maxInitialBet[0] =
+          Math.max(
+              maxInitialBet[0],
+              initialBet
+          );
+
+
+      playRound(
+          settings,
+          playerRoundEngine,
+          dealerPlayEngine,
+          shoe,
+          strategy,
+          count,
+          initialBet,
+          bankroll,
+          totalWagerExposure
+      );
+
+
+      handsPlayed++;
+    }
+
+
+    return createSessionState(
+        policy,
+        bankroll[0],
+        handsPlayed,
+        false,
+        totalInitialWager[0],
+        totalWagerExposure[0],
+        minimumBetHands[0],
+        bet50Hands[0],
+        bet100Hands[0],
+        bet200Hands[0],
+        maxInitialBet[0]
+    );
+  }
+
+
+  private static SessionState createSessionState(
+      Policy policy,
+      double bankroll,
+      int handsPlayed,
+      boolean unableToContinue,
+      double totalInitialWager,
+      double totalWagerExposure,
+      long minimumBetHands,
+      long bet50Hands,
+      long bet100Hands,
+      long bet200Hands,
+      double maxInitialBet)
+  {
+    return new SessionState(
+        policy,
+        bankroll,
+        handsPlayed,
+        unableToContinue,
+        bankroll
+            >= ACCEPTABLE_NIGHT_THRESHOLD,
+        totalInitialWager,
+        totalWagerExposure,
+        minimumBetHands,
+        bet50Hands,
+        bet100Hands,
+        bet200Hands,
+        maxInitialBet
+    );
+  }
+
+
+  // ============================================================
+  // BETTING POLICIES
+  // ============================================================
+
+  private static double chooseBet(
+      Policy policy,
+      CountingSystem count,
+      Shoe shoe,
+      double previousBet)
+  {
+    if (policy
+        == Policy.FLAT_BASIC)
+    {
+      return BASE_BET;
+    }
+
+
+    boolean favorable;
+
+
+    switch (policy)
+    {
+      case ACE_MILESTONE_STRICT:
+        favorable =
+            milestoneStrict(
+                (AceOnlyCount) count,
+                shoe
+            );
+        break;
+
+
+      case ACE_TRUE_1_0:
+        favorable =
+            isBackHalf(
+                shoe
+            )
+            && count.getSignal(
+                shoe.getRemainingCardCount()
+            ) >= 1.0;
+        break;
+
+
+      case ACE_TRUE_1_5:
+        favorable =
+            isBackHalf(
+                shoe
+            )
+            && count.getSignal(
+                shoe.getRemainingCardCount()
+            ) >= 1.5;
+        break;
+
+
+      case ACE_FIVE:
+        favorable =
+            count.getSignal(
+                shoe.getRemainingCardCount()
+            ) >= 2.0;
+        break;
+
+
+      default:
+        throw new IllegalStateException(
+            "Unexpected policy: "
+            + policy
+        );
+    }
+
+
+    if (!favorable)
+    {
+      return BASE_BET;
+    }
+
+
+    return Math.min(
+        MAX_BET,
+        previousBet * 2.0
+    );
+  }
+
+
+  /*
+   * Tested human-friendly Ace-only rule.
+   *
+   * Only acts between approximately
+   * 4 and 2 decks remaining.
+   */
+  private static boolean milestoneStrict(
+      AceOnlyCount count,
+      Shoe shoe)
+  {
+    double decksRemaining =
+        shoe.getRemainingCardCount()
+        / 52.0;
+
+
+    if (decksRemaining > 4.0
+        || decksRemaining < 2.0)
+    {
+      return false;
+    }
+
+
+    int acesSeen =
+        count.getAcesSeen();
+
+
+    if (decksRemaining > 3.5)
+    {
+      return acesSeen <= 12;
+    }
+
+
+    if (decksRemaining > 2.5)
+    {
+      return acesSeen <= 16;
+    }
+
+
+    return acesSeen <= 20;
+  }
+
+
+  private static boolean isBackHalf(
+      Shoe shoe)
+  {
+    return shoe.getRemainingCardCount()
+        <= 4.0 * 52.0;
+  }
+
+
+  private static double capBetToBankroll(
+      double requestedBet,
+      double bankroll)
+  {
+    if (requestedBet >= 200.0
+        && bankroll >= 200.0)
+    {
+      return 200.0;
+    }
+
+
+    if (requestedBet >= 100.0
+        && bankroll >= 100.0)
+    {
+      return 100.0;
+    }
+
+
+    if (requestedBet >= 50.0
+        && bankroll >= 50.0)
+    {
+      return 50.0;
+    }
+
+
+    return BASE_BET;
+  }
+
+
+  private static CountingSystem
+      createCountingSystem(
+          Policy policy)
+  {
+    switch (policy)
+    {
+      case FLAT_BASIC:
+        return null;
+
+
+      case ACE_MILESTONE_STRICT:
+      case ACE_TRUE_1_0:
+      case ACE_TRUE_1_5:
+        return new AceOnlyCount();
+
+
+      case ACE_FIVE:
+        return new AceFiveCount();
+
+
+      default:
+        throw new IllegalStateException(
+            "Unexpected policy: "
+            + policy
+        );
+    }
+  }
+
+
+  // ============================================================
+  // ROUND
+  // ============================================================
+
+  private static void playRound(
+      GameSettings settings,
+      PlayerRoundEngine playerRoundEngine,
+      DealerPlayEngine dealerPlayEngine,
+      Shoe shoe,
+      HandStrategy strategy,
+      CountingSystem count,
+      double initialBet,
+      double[] bankroll,
+      double[] totalWagerExposure)
+  {
+    bankroll[0] -=
+        initialBet;
+
+
+    totalWagerExposure[0] +=
+        initialBet;
+
+
+    Map<Card, Boolean> observed =
+        new IdentityHashMap<>();
+
+
+    Hand playerHand =
+        new Hand();
+
+
+    Hand dealerHand =
+        new Hand();
+
+
+    // ----------------------------------------------------------
+    // INITIAL DEAL
+    // ----------------------------------------------------------
+
+    Card playerCard1 =
+        shoe.drawCard();
+
+
+    playerHand.addCard(
+        playerCard1
+    );
+
+
+    observeVisible(
+        count,
+        observed,
+        playerCard1
+    );
+
+
+    Card dealerUpCard =
+        shoe.drawCard();
+
+
+    dealerHand.addCard(
+        dealerUpCard
+    );
+
+
+    observeVisible(
+        count,
+        observed,
+        dealerUpCard
+    );
+
+
+    Card playerCard2 =
+        shoe.drawCard();
+
+
+    playerHand.addCard(
+        playerCard2
+    );
+
+
+    observeVisible(
+        count,
+        observed,
+        playerCard2
+    );
+
+
+    /*
+     * Hole card leaves the shoe but is not
+     * visible to the player yet.
+     */
+    Card dealerHoleCard =
+        shoe.drawCard();
+
+
+    dealerHand.addCard(
+        dealerHoleCard
+    );
+
+
+    boolean playerBlackjack =
+        playerHand.isBlackjack();
+
+
+    boolean dealerBlackjack =
+        dealerHand.isBlackjack();
+
+
+    // ----------------------------------------------------------
+    // NATURALS
+    // ----------------------------------------------------------
+
+    if (dealerBlackjack)
+    {
+      /*
+       * Dealer blackjack exposes the hole card.
+       */
+      observeVisible(
+          count,
+          observed,
+          dealerHoleCard
+      );
+
+
+      if (playerBlackjack)
+      {
+        bankroll[0] +=
+            initialBet;
+      }
+
+
+      return;
+    }
+
+
+    if (playerBlackjack)
+    {
+      bankroll[0] +=
+          initialBet
+          * settings
+              .getBlackjackPayout()
+              .getTotalReturnMultiplier();
+
+
+      /*
+       * Match our previous visibility model:
+       * do not count an unrevealed dealer
+       * hole card.
+       */
+      return;
+    }
+
+
+    // ----------------------------------------------------------
+    // PLAYER PLAY
+    // ----------------------------------------------------------
+
+    PlayerHandState initialState =
+        new PlayerHandState(
+            playerHand
+        );
+
+
+    List<PlayerHandState> playerStates =
+        playerRoundEngine.play(
+            initialState,
+            dealerUpCard,
+            strategy,
+            shoe,
+            new PlayerRoundListener()
+            {
+              @Override
+              public boolean canDoubleOrSplit(
+                  PlayerHandState state)
+              {
+                return bankroll[0]
+                    >= initialBet;
+              }
+
+
+              @Override
+              public double getWagerAmount(
+                  PlayerHandState state)
+              {
+                return initialBet;
+              }
+
+
+              @Override
+              public void handStarted(
+                  PlayerHandState state,
+                  int index,
+                  int handCount)
+              {
+              }
+
+
+              @Override
+              public void cardDrawn(
+                  PlayerHandState state,
+                  Card card)
+              {
+                observeVisible(
+                    count,
+                    observed,
+                    card
+                );
+              }
+
+
+              @Override
+              public void handDoubled(
+                  PlayerHandState state)
+              {
+                bankroll[0] -=
+                    initialBet;
+
+
+                totalWagerExposure[0] +=
+                    initialBet;
+              }
+
+
+              @Override
+              public void handSurrendered(
+                  PlayerHandState state)
+              {
+              }
+
+
+              @Override
+              public void handSplit(
+                  PlayerHandState originalState,
+                  PlayerHandState newState,
+                  HandSplitResult splitResult)
+              {
+                bankroll[0] -=
+                    initialBet;
+
+
+                totalWagerExposure[0] +=
+                    initialBet;
+
+
+                /*
+                 * Split replacement cards were
+                 * dealt internally. Count newly
+                 * visible cards from both hands.
+                 */
+                observeHand(
+                    count,
+                    observed,
+                    originalState.getHand()
+                );
+
+
+                observeHand(
+                    count,
+                    observed,
+                    newState.getHand()
+                );
+              }
+
+
+              @Override
+              public void handFinished(
+                  PlayerHandState state,
+                  int index,
+                  int handCount,
+                  HandFinishReason reason)
+              {
+              }
+            }
+        );
+
+
+    // ----------------------------------------------------------
+    // DEALER PLAY
+    // ----------------------------------------------------------
+
+    boolean dealerNeedsToPlay =
+        false;
+
+
+    for (PlayerHandState state :
+         playerStates)
+    {
+      if (!state.getHand().isBusted()
+          && !state.didSurrender())
+      {
+        dealerNeedsToPlay =
+            true;
+
+        break;
+      }
+    }
+
+
+    if (dealerNeedsToPlay)
+    {
+      /*
+       * Hole card becomes visible.
+       */
+      observeVisible(
+          count,
+          observed,
+          dealerHoleCard
+      );
+
+
+      dealerPlayEngine.play(
+          dealerHand,
+          shoe,
+          card ->
+              observeVisible(
+                  count,
+                  observed,
+                  card
+              )
+      );
+    }
+
+
+    // ----------------------------------------------------------
+    // SETTLEMENT
+    // ----------------------------------------------------------
+
+    for (PlayerHandState state :
+         playerStates)
+    {
+      HandOutcome outcome =
+          HandOutcomeAnalyzer.analyze(
+              state.getHand(),
+              dealerHand,
+              false,
+              state.didSurrender()
+          );
+
+
+      double wager =
+          initialBet
+          * state.getWagerMultiplier();
+
+
+      switch (outcome)
+      {
+        case WIN:
+          bankroll[0] +=
+              wager * 2.0;
+          break;
+
+
+        case LOSS:
+          break;
+
+
+        case PUSH:
+          bankroll[0] +=
+              wager;
+          break;
+
+
+        case SURRENDER:
+          bankroll[0] +=
+              initialBet * 0.5;
+          break;
+
+
+        case BLACKJACK:
+          throw new IllegalStateException(
+              "Natural blackjack should "
+              + "have been resolved earlier"
+          );
+
+
+        default:
+          throw new IllegalStateException(
+              "Unexpected outcome: "
+              + outcome
+          );
+      }
+    }
+  }
+
+
+  // ============================================================
+  // CARD VISIBILITY
+  // ============================================================
+
+  private static void observeHand(
+      CountingSystem count,
+      Map<Card, Boolean> observed,
+      Hand hand)
+  {
+    if (count == null)
+      return;
+
+
+    for (int i = 0;
+         i < hand.getNumCards();
+         i++)
+    {
+      observeVisible(
+          count,
+          observed,
+          hand.getCard(i)
+      );
+    }
+  }
+
+
+  private static void observeVisible(
+      CountingSystem count,
+      Map<Card, Boolean> observed,
+      Card card)
+  {
+    if (count == null)
+      return;
+
+
+    if (observed.containsKey(card))
+      return;
+
+
+    observed.put(
+        card,
+        true
+    );
+
+
+    count.observe(
+        card
+    );
+  }
+
+
+  // ============================================================
+  // SETTINGS
+  // ============================================================
+
+  private static GameSettings
+      createResearchSettings()
+  {
+    GameSettings settings =
+        new GameSettings();
+
+
+    settings.setDecksInShoe(
+        8
+    );
+
+
+    settings.setDealerHitsSoft17(
+        true
+    );
+
+
+    settings.setDoubleAfterSplit(
+        true
+    );
+
+
+    settings.setAllowSurrender(
+        true
+    );
+
+
+    settings.setBlackjackPayout(
+        GameSettings.BlackjackPayout
+            .THREE_TO_TWO
+    );
+
+
+    return settings;
+  }
+
+
+  // ============================================================
+  // OUTPUT
+  // ============================================================
+
+  private static void printPolicySummary(
+      PolicySummary summary)
+  {
+    System.out.println();
+
+    System.out.println(
+        summary.policy()
+    );
+
+    System.out.println(
+        "----------------------------------------"
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "Average ending bankroll: $%.2f%n",
+        summary.meanEndingBankroll()
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "Average P/L: %+.2f%n",
+        summary.meanEndingBankroll()
+            - STARTING_BANKROLL
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "Ending bankroll SD: $%.2f%n",
+        summary.endingBankrollSD()
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "Unable to continue: %.3f%%%n",
+        summary.ruinRate()
+            * 100.0
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "Ending bankroll >= $400: %.3f%%%n",
+        summary.acceptableNightRate()
+            * 100.0
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "Average hands played: %.2f%n",
+        summary.averageHandsPlayed()
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "Average initial wager: $%.2f%n",
+        summary.averageInitialWager()
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "Average wager exposure: $%.2f%n",
+        summary.averageWagerExposure()
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "Hands above minimum: %.3f%%%n",
+        summary.aboveMinimumRate()
+            * 100.0
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "$25 hands: %.3f%%%n",
+        summary.bet25Rate()
+            * 100.0
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "$50 hands: %.3f%%%n",
+        summary.bet50Rate()
+            * 100.0
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "$100 hands: %.3f%%%n",
+        summary.bet100Rate()
+            * 100.0
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "$200 hands: %.3f%%%n",
+        summary.bet200Rate()
+            * 100.0
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "Average session max initial bet: $%.2f%n",
+        summary.averageMaxInitialBet()
+    );
+  }
+
+
+  private static void printPairSummary(
+      PairSummary summary)
+  {
+    System.out.println();
+
+    System.out.println(
+        summary.testPolicy()
+        + " vs "
+        + summary.referencePolicy()
+    );
+
+    System.out.println(
+        "----------------------------------------"
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "Average P/L difference: $%+.3f%n",
+        summary.meanDifference()
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "95%% CI: $%+.3f to $%+.3f%n",
+        summary.meanDifference()
+            - summary.ci95(),
+        summary.meanDifference()
+            + summary.ci95()
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "Test finishes ahead: %.3f%%%n",
+        summary.testBetterRate()
+            * 100.0
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "Same bankroll: %.3f%%%n",
+        summary.sameRate()
+            * 100.0
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "Reference finishes ahead: %.3f%%%n",
+        summary.referenceBetterRate()
+            * 100.0
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "Ruin-rate difference: %+.3f pp%n",
+        summary.ruinRateDifference()
+            * 100.0
+    );
+
+
+    System.out.printf(
+        Locale.US,
+        "$400+ night difference: %+.3f pp%n",
+        summary.acceptableRateDifference()
+            * 100.0
+    );
+  }
+
+
+  private static void writeHeader()
+      throws IOException
+  {
+    String header =
+        String.join(
+            ",",
+            "policy",
+            "sessions",
+            "hands_per_session",
+            "starting_bankroll",
+            "base_bet",
+            "max_bet",
+            "mean_ending_bankroll",
+            "mean_profit_loss",
+            "ending_bankroll_sd",
+            "ruin_rate",
+            "acceptable_night_rate",
+            "average_hands_played",
+            "average_initial_wager",
+            "average_wager_exposure",
+            "above_minimum_rate",
+            "bet_25_rate",
+            "bet_50_rate",
+            "bet_100_rate",
+            "bet_200_rate",
+            "average_max_initial_bet"
+        )
+        + System.lineSeparator();
+
+
+    Files.writeString(
+        OUTPUT_FILE,
+        header,
+        StandardOpenOption.CREATE
+    );
+  }
+
+
+  private static void writePolicySummary(
+      PolicySummary summary)
+      throws IOException
+  {
+    String row =
+        String.format(
+            Locale.US,
+            "%s,%d,%d,%.2f,%.2f,%.2f,"
+            + "%.10f,%.10f,%.10f,"
+            + "%.10f,%.10f,%.10f,"
+            + "%.10f,%.10f,"
+            + "%.10f,%.10f,%.10f,%.10f,%.10f,"
+            + "%.10f%n",
+            summary.policy(),
+            SESSIONS,
+            HANDS_PER_SESSION,
+            STARTING_BANKROLL,
+            BASE_BET,
+            MAX_BET,
+            summary.meanEndingBankroll(),
+            summary.meanEndingBankroll()
+                - STARTING_BANKROLL,
+            summary.endingBankrollSD(),
+            summary.ruinRate(),
+            summary.acceptableNightRate(),
+            summary.averageHandsPlayed(),
+            summary.averageInitialWager(),
+            summary.averageWagerExposure(),
+            summary.aboveMinimumRate(),
+            summary.bet25Rate(),
+            summary.bet50Rate(),
+            summary.bet100Rate(),
+            summary.bet200Rate(),
+            summary.averageMaxInitialBet()
+        );
+
+
+    Files.writeString(
+        OUTPUT_FILE,
+        row,
+        StandardOpenOption.APPEND
+    );
+  }
+
+
+  // ============================================================
+  // DATA
+  // ============================================================
+
+  private enum Policy
+  {
+    FLAT_BASIC,
+    ACE_MILESTONE_STRICT,
+    ACE_TRUE_1_0,
+    ACE_TRUE_1_5,
+    ACE_FIVE
+  }
+
+
+  private record SessionState(
+      Policy policy,
+      double bankroll,
+      int handsPlayed,
+      boolean unableToContinue,
+      boolean acceptableNight,
+      double totalInitialWager,
+      double wagerExposure,
+      long bet25Hands,
+      long bet50Hands,
+      long bet100Hands,
+      long bet200Hands,
+      double maxInitialBet)
+  {
+  }
+
+
+  private record PolicySummary(
+      Policy policy,
+      double meanEndingBankroll,
+      double endingBankrollSD,
+      double ruinRate,
+      double acceptableNightRate,
+      double averageHandsPlayed,
+      double averageInitialWager,
+      double averageWagerExposure,
+      double aboveMinimumRate,
+      double bet25Rate,
+      double bet50Rate,
+      double bet100Rate,
+      double bet200Rate,
+      double averageMaxInitialBet)
+  {
+  }
+
+
+  private static class PolicyAccumulator
+  {
+    private final Policy policy;
+
+
+    private long count;
+
+    private double meanBankroll;
+    private double bankrollM2;
+
+
+    private long ruinCount;
+    private long acceptableCount;
+
+
+    private long totalHands;
+
+
+    private double totalInitialWager;
+    private double totalWagerExposure;
+
+
+    private long bet25Hands;
+    private long bet50Hands;
+    private long bet100Hands;
+    private long bet200Hands;
+
+
+    private double totalMaxInitialBet;
+
+
+    PolicyAccumulator(
+        Policy policy)
+    {
+      this.policy =
+          policy;
+    }
+
+
+    void add(
+        SessionState state)
+    {
+      count++;
+
+
+      double delta =
+          state.bankroll()
+          - meanBankroll;
+
+
+      meanBankroll +=
+          delta / count;
+
+
+      double delta2 =
+          state.bankroll()
+          - meanBankroll;
+
+
+      bankrollM2 +=
+          delta
+          * delta2;
+
+
+      if (state.unableToContinue())
+      {
+        ruinCount++;
+      }
+
+
+      if (state.acceptableNight())
+      {
+        acceptableCount++;
+      }
+
+
+      totalHands +=
+          state.handsPlayed();
+
+
+      totalInitialWager +=
+          state.totalInitialWager();
+
+
+      totalWagerExposure +=
+          state.wagerExposure();
+
+
+      bet25Hands +=
+          state.bet25Hands();
+
+
+      bet50Hands +=
+          state.bet50Hands();
+
+
+      bet100Hands +=
+          state.bet100Hands();
+
+
+      bet200Hands +=
+          state.bet200Hands();
+
+
+      totalMaxInitialBet +=
+          state.maxInitialBet();
+    }
+
+
+    PolicySummary finish()
+    {
+      double sd =
+          count <= 1
+              ? 0.0
+              : Math.sqrt(
+                  bankrollM2
+                  / (count - 1)
+              );
+
+
+      long aboveMinimumHands =
+          bet50Hands
+          + bet100Hands
+          + bet200Hands;
+
+
+      return new PolicySummary(
+          policy,
+          meanBankroll,
+          sd,
+          (double) ruinCount
+              / count,
+          (double) acceptableCount
+              / count,
+          (double) totalHands
+              / count,
+          totalInitialWager
+              / totalHands,
+          totalWagerExposure
+              / count,
+          (double) aboveMinimumHands
+              / totalHands,
+          (double) bet25Hands
+              / totalHands,
+          (double) bet50Hands
+              / totalHands,
+          (double) bet100Hands
+              / totalHands,
+          (double) bet200Hands
+              / totalHands,
+          totalMaxInitialBet
+              / count
+      );
+    }
+  }
+
+
+  private record PairSummary(
+      Policy testPolicy,
+      Policy referencePolicy,
+      double meanDifference,
+      double differenceSD,
+      double standardError,
+      double ci95,
+      double testBetterRate,
+      double sameRate,
+      double referenceBetterRate,
+      double ruinRateDifference,
+      double acceptableRateDifference)
+  {
+  }
+
+
+  private static class PairAccumulator
+  {
+    private final Policy testPolicy;
+    private final Policy referencePolicy;
+
+
+    private long count;
+
+
+    private double meanDifference;
+    private double differenceM2;
+
+
+    private long testBetterCount;
+    private long sameCount;
+    private long referenceBetterCount;
+
+
+    private long testRuinCount;
+    private long referenceRuinCount;
+
+
+    private long testAcceptableCount;
+    private long referenceAcceptableCount;
+
+
+    PairAccumulator(
+        Policy testPolicy,
+        Policy referencePolicy)
+    {
+      this.testPolicy =
+          testPolicy;
+
+      this.referencePolicy =
+          referencePolicy;
+    }
+
+
+    void add(
+        SessionState test,
+        SessionState reference)
+    {
+      count++;
+
+
+      double difference =
+          test.bankroll()
+          - reference.bankroll();
+
+
+      double delta =
+          difference
+          - meanDifference;
+
+
+      meanDifference +=
+          delta / count;
+
+
+      double delta2 =
+          difference
+          - meanDifference;
+
+
+      differenceM2 +=
+          delta
+          * delta2;
+
+
+      if (difference > 0.0)
+      {
+        testBetterCount++;
+      }
+      else if (difference < 0.0)
+      {
+        referenceBetterCount++;
+      }
+      else
+      {
+        sameCount++;
+      }
+
+
+      if (test.unableToContinue())
+      {
+        testRuinCount++;
+      }
+
+
+      if (reference.unableToContinue())
+      {
+        referenceRuinCount++;
+      }
+
+
+      if (test.acceptableNight())
+      {
+        testAcceptableCount++;
+      }
+
+
+      if (reference.acceptableNight())
+      {
+        referenceAcceptableCount++;
+      }
+    }
+
+
+    PairSummary finish()
+    {
+      double sd =
+          count <= 1
+              ? 0.0
+              : Math.sqrt(
+                  differenceM2
+                  / (count - 1)
+              );
+
+
+      double se =
+          sd
+          / Math.sqrt(
+              count
+          );
+
+
+      return new PairSummary(
+          testPolicy,
+          referencePolicy,
+          meanDifference,
+          sd,
+          se,
+          CI_95_Z * se,
+          (double) testBetterCount
+              / count,
+          (double) sameCount
+              / count,
+          (double) referenceBetterCount
+              / count,
+          (
+              (double) testRuinCount
+              - referenceRuinCount
+          )
+          / count,
+          (
+              (double) testAcceptableCount
+              - referenceAcceptableCount
+          )
+          / count
+      );
+    }
+  }
+}

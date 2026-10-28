@@ -5,7 +5,65 @@ public class GameSettings
   private boolean surrenderAfterSplit = false;
   private boolean coachingEnabled = false;
   private boolean handSignalsEnabled = false;
+  private boolean strategyGuidanceEnabled = false;
+  private StrategyMode strategyMode = StrategyMode.SOCIAL;
+  private boolean discardTrayVisible = false;
+  private boolean aceCountVisible = false;
 
+
+  public boolean aceCountVisible()
+  {
+    return aceCountVisible;
+  }
+
+  public void setAceCountVisible(
+    boolean visible)
+  {
+    aceCountVisible = visible;
+  }
+  
+  public boolean isDiscardTrayVisible()
+  {
+    return discardTrayVisible;
+  }
+
+  public void setDiscardTrayVisible(
+      boolean isVisible)
+  {
+      discardTrayVisible = isVisible;
+  }
+  
+  public StrategyMode getStrategyMode()
+  {
+    return strategyMode;
+  }
+
+  public void setStrategyMode(
+      StrategyMode strategyMode)
+  {
+    if (strategyMode == null)
+    {
+      throw new IllegalArgumentException(
+          "Strategy mode cannot be null"
+      );
+    }
+
+    this.strategyMode =
+        strategyMode;
+  }
+
+  public boolean strategyGuidanceEnabled()
+  {
+    return strategyGuidanceEnabled;
+  }
+
+  public void setStrategyGuidanceEnabled(
+      boolean enabled)
+  {
+    strategyGuidanceEnabled =
+        enabled;
+  }
+  
   public boolean handSignalsEnabled()
   {
     return handSignalsEnabled;

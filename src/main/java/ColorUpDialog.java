@@ -11,12 +11,19 @@ import javafx.application.Platform;
 
 public class ColorUpDialog
 {
-  public static boolean show(
+    public enum Choice
+    {
+      CANCEL,
+      CHANGE_TABLE,
+      EXIT
+    }
+    
+  public static Choice show(
       Stage ownerStage,
       double amount)
   {
-    final boolean[] confirmed =
-        { false };
+    final Choice[] choice =
+        { Choice.CANCEL };
 
     Label title =
         new Label(
@@ -104,6 +111,19 @@ public class ColorUpDialog
             "CANCEL"
         );
 
+      Button changeTable =
+          new Button(
+              "CHANGE TABLE"
+          );
+      changeTable.setStyle("""
+          -fx-background-color: transparent;
+          -fx-border-color: #d4af37;
+          -fx-border-width: 1px;
+          -fx-border-radius: 5px;
+          -fx-text-fill: #d4af37;
+          -fx-font-weight: bold;
+      """);
+      
     Button confirm =
         new Button(
             "EXIT"
@@ -115,13 +135,14 @@ public class ColorUpDialog
         -fx-font-weight: bold;
     """);
 
-    HBox buttons =
-        new HBox(
-            12,
-            cancel,
-            confirm
-        );
-
+      HBox buttons =
+          new HBox(
+              12,
+              cancel,
+              changeTable,
+              confirm
+          );
+      
     buttons.setAlignment(
         Pos.CENTER
     );
@@ -167,10 +188,21 @@ public class ColorUpDialog
             dialog.close()
     );
 
+        changeTable.setOnAction(
+            e ->
+            {
+              choice[0] =
+                  Choice.CHANGE_TABLE;
+
+              dialog.close();
+            }
+        );
+
+      
     confirm.setOnAction(
         e ->
         {
-          confirmed[0] = true;
+          choice[0] = Choice.EXIT;
           dialog.close();
         }
     );
@@ -203,6 +235,6 @@ public class ColorUpDialog
       );
 
       dialog.showAndWait();
-    return confirmed[0];
+    return choice[0];
   }
 }

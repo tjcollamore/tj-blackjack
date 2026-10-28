@@ -5,9 +5,6 @@ entrypoint = "Main.java"
 hidden = ["**/*.class", "javafx-sdk-18.0.2"]
 modules = ["java-graalvm22.3", "nix"]
 
-[unitTest]
-language = "java"
-
 [nix]
 channel = "stable-25_05"
 
@@ -55,13 +52,9 @@ runButton = "Run JavaFX App"
 name = "Run Tests"
 mode = "sequential"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "find . -name \"*.class\" -delete"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "mvn test-compile"
+[[workflows.workflow]]
+name = "Run Tests"
+mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -73,7 +66,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "mvn clean compile exec:java"
+args = "mvn clean javafx:run"
 
 [agent]
 expertMode = true

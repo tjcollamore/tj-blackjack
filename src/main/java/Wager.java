@@ -68,11 +68,21 @@ public class Wager
   
   public String getFormattedPayout()
   {
-    return bankroll.getFormattedCurrency(getPayout());
+    return Bankroll.getFormattedCurrency(getPayout());
   }
 
   public boolean hasFundsToDoubleOrSplit()
   {
     return bankroll.get() >= getBetAmount();
+  }
+
+  public double getProfit()
+  {
+    return payout - betAmount;
+  }
+
+  public String getFormattedProfit()
+  {
+    return Bankroll.getFormattedCurrency(getProfit());
   }
 }

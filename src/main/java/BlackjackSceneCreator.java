@@ -14,6 +14,11 @@ import javafx.stage.Stage;
 import javafx.scene.shape.Ellipse;
 import java.util.*;
 import javafx.scene.image.Image;
+import javafx.scene.text.TextAlignment;
+import javafx.scene.layout.Pane;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.shape.Line;
+import javafx.scene.shape.Polygon;
 
 public class BlackjackSceneCreator 
 {
@@ -26,12 +31,20 @@ public class BlackjackSceneCreator
   private Label tableRuleTop = new Label();
   private Label tableRuleBottom = new Label();
   private VBox tableRules;
+  private Label strategyGuidanceLabel = new Label();
+  private Label aceMentalBalanceLabel = new Label();
+  private Label aceExactBalanceLabel = new Label();
+  private VBox aceBalanceBadge =
+        new VBox(
+            1,
+            aceMentalBalanceLabel,
+            aceExactBalanceLabel
+        );
+  private final AceCountHandView aceCountHandView = new AceCountHandView();
   private ChipStackView bankrollChipView = new ChipStackView();
   private ChipStackView wagerChipView = new ChipStackView();
   private ChipStackView wagerPreviewChipView = new ChipStackView();
   private ChipStackView splitWagerChipView = new ChipStackView();
-  private Label shoeOverlay = new Label("[Shoe]");
-  private Label discardOverlay = new Label("[Discard]");
   private SubroundBadge subroundBadge = new SubroundBadge();
   private final ScoreBadge playerScoreBadge = new ScoreBadge();
   private final ScoreBadge dealerScoreBadge = new ScoreBadge();
@@ -45,6 +58,7 @@ public class BlackjackSceneCreator
                 )
         )
     );
+    private final DiscardTrayView discardTrayView;
   private GameSettings settings;
   private Ellipse wagerSpot = new Ellipse(58, 40);
   private StackPane wagerArea;
@@ -54,14 +68,11 @@ public class BlackjackSceneCreator
   public BlackjackSceneCreator(GameSettings settings)
   {
     this.settings = settings;
+    this.discardTrayView = new DiscardTrayView(settings);
   }
 
   public Scene create() 
   {
-    // For now, don't show the placeholder strings
-    shoeOverlay.setOpacity(0);
-    discardOverlay.setOpacity(0);
-
     StackPane layeredPane = new StackPane();
     Scene scene = new Scene(layeredPane, 500, 760);
 
@@ -73,6 +84,81 @@ public class BlackjackSceneCreator
 
     trainingOverlay.prefHeightProperty()
       .bind(layeredPane.heightProperty());
+
+      trainingOverlay.getChildren().add(
+          aceCountHandView
+      );
+
+      aceCountHandView.setLayoutX(115);
+      aceCountHandView.setLayoutY(650);
+      updateAceAwarenessVisibility();
+      
+        discardTrayView.setTranslateX(-18);
+        discardTrayView.setTranslateY(8);
+        discardTrayView.setVisible(settings.isDiscardTrayVisible());
+
+      
+      aceMentalBalanceLabel.setStyle("""
+          -fx-text-fill: #d4af37;
+          -fx-font-size: 12px;
+          -fx-font-weight: bold;
+      """);
+
+      aceExactBalanceLabel.setStyle("""
+          -fx-text-fill: #aaaaaa;
+          -fx-font-size: 8px;
+      """);
+
+      aceBalanceBadge.setAlignment(Pos.CENTER);
+      aceBalanceBadge.setStyle("""
+          -fx-background-color: rgba(25, 25, 25, 0.72);
+          -fx-background-radius: 8px;
+          -fx-padding: 5px 9px;
+      """);
+
+      aceBalanceBadge.setMouseTransparent(true);
+      aceBalanceBadge.setVisible(settings.aceCountVisible());
+      aceBalanceBadge.setManaged(true);
+      aceBalanceBadge.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+      updateAceBalance(0, 0.0);
+     
+      
+    strategyGuidanceLabel.setStyle("""
+        -fx-background-color: rgba(25, 25, 25, 0.68);
+        -fx-background-radius: 10px;
+        -fx-padding: 6px 10px;
+        -fx-text-fill: rgba(255, 255, 255, 0.92);
+        -fx-font-size: 12px;
+        -fx-font-weight: normal;
+    """);
+    
+    strategyGuidanceLabel.setWrapText(true);
+    strategyGuidanceLabel.setMaxWidth(300);
+    strategyGuidanceLabel.setVisible(false);
+    strategyGuidanceLabel.setManaged(false);
+    strategyGuidanceLabel.setAlignment(Pos.CENTER);
+    strategyGuidanceLabel.setTextAlignment(TextAlignment.CENTER);
+    strategyGuidanceLabel.setMaxWidth(250);
+    
+    trainingOverlay.getChildren().add(
+      strategyGuidanceLabel
+    );
+
+    strategyGuidanceLabel.layoutXProperty()
+      .bind(
+          trainingOverlay.widthProperty()
+              .subtract(
+                  strategyGuidanceLabel.widthProperty()
+              )
+              .divide(2)
+              .add(70)
+      );
+    
+    strategyGuidanceLabel.layoutYProperty()
+      .bind(
+          trainingOverlay.heightProperty()
+              .subtract(125)
+      );
     
     root = new BorderPane();
     root.setStyle("-fx-background-repeat: repeat;" +
@@ -81,28 +167,40 @@ public class BlackjackSceneCreator
 
     setFeltColor(settings.getFeltColor());
 
-    layeredPane.getChildren().add(root);
-    layeredPane.getChildren().add(trainingOverlay);
+      layeredPane.getChildren().add(
+          root
+      );
 
-    // Discard pile upper right
-    discardOverlay.setStyle(
-      "-fx-text-fill: white;" +
-      "-fx-font-weight: bold;" +
-      "-fx-padding: 5px;"
-    );
-    layeredPane.getChildren().add(discardOverlay);
-    StackPane.setAlignment(discardOverlay, Pos.TOP_RIGHT);
-    StackPane.setMargin(discardOverlay, new Insets(10));
-    
+      layeredPane.getChildren().add(
+          trainingOverlay
+      );
+
+      layeredPane.getChildren().add(
+          aceBalanceBadge
+      );
+
+      StackPane.setAlignment(
+          aceBalanceBadge,
+          Pos.TOP_LEFT
+      );
+
+      StackPane.setMargin(
+          aceBalanceBadge,
+          new Insets(
+              115,
+              0,
+              0,
+              10
+          )
+      );
+      
+      
     // === LEFT PANEL ===
     VBox leftPanel = new VBox();
     leftPanel.setPadding(new Insets(10));
     leftPanel.setPrefWidth(140);
     leftPanel.setMaxWidth(140);
     leftPanel.setMinWidth(140);
-
-    shoeOverlay.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5px;");
-    VBox.setMargin(shoeOverlay, new Insets(0, 0, 10, 0));
 
     Region spacerTop = new Region();
     VBox.setVgrow(spacerTop, Priority.ALWAYS);
@@ -179,15 +277,15 @@ public class BlackjackSceneCreator
     Region spacerBottom = new Region();
     VBox.setVgrow(spacerBottom, Priority.ALWAYS);
 
-    leftPanel.getChildren().addAll(
-      shoeOverlay,
-      spacerTop,
-      statsPlaceholder,
-      spacerMiddle,
-      bankrollBox,
-      spacerBottom
-    );
-
+      leftPanel.getChildren().addAll(
+          discardTrayView,
+          spacerTop,
+          statsPlaceholder,
+          spacerMiddle,
+          bankrollBox,
+          spacerBottom
+      );
+      
     // === CENTER TABLE ===
     dealerCards.setPadding(new Insets(10, 5, 0, 5));
     dealerCards.setAlignment(Pos.CENTER);
@@ -422,17 +520,18 @@ public class BlackjackSceneCreator
             : "DEALER STANDS ON ALL 17s"
     );
   }
-  
-  public Node getShoeAnchor()
-  {
-    return shoeOverlay;
-  }
-  
-  public Node getDiscardAnchor()
-  {
-    return discardOverlay;
-  }
-  
+    
+    public Node getDiscardAnchor()
+    {
+      if (discardTrayView.isVisible())
+      {
+        return discardTrayView
+            .getAnimationAnchor();
+      }
+    
+      return dealerCards;
+    }
+        
   public ImageView getGearIcon()
   {
       return gearIcon;
@@ -479,6 +578,39 @@ public class BlackjackSceneCreator
   public ChipStackView getWagerPreviewChipView()
   {
     return wagerPreviewChipView;
+  }
+
+  public void showStrategyGuidance(
+    StrategyGuidance guidance)
+  {
+  if (guidance == null)
+  {
+    hideStrategyGuidance();
+    return;
+  }
+
+  strategyGuidanceLabel.setText(
+      guidance.getRule()
+  );
+
+  strategyGuidanceLabel.setVisible(
+      true
+  );
+
+  strategyGuidanceLabel.setManaged(
+      true
+  );
+  }
+
+  public void hideStrategyGuidance()
+  {
+  strategyGuidanceLabel.setVisible(
+      false
+  );
+
+  strategyGuidanceLabel.setManaged(
+      false
+  );
   }
   
   public Pane getTrainingOverlay()
@@ -565,4 +697,138 @@ public class BlackjackSceneCreator
         "-fx-background-position: center;"
     );
   }
+
+    public void addDiscardedCards(
+        int count)
+    {
+      discardTrayView.addDiscardedCards(
+          count
+      );
+    }
+
+
+    public void setDiscardedCardCount(
+        int count)
+    {
+      discardTrayView.setDiscardedCardCount(
+          count
+      );
+    }
+
+
+    public void resetDiscardTray()
+    {
+      discardTrayView.reset();
+    }
+
+
+    public void setDiscardTrayVisible(
+        boolean isVisible)
+    {
+      discardTrayView.setVisible(isVisible);
+    }
+
+    public boolean isDiscardTrayVisible()
+    {
+      return discardTrayView.isVisible();
+    }
+    public void setAceCountVisible(
+        boolean visible)
+    {
+      aceBalanceBadge.setVisible(
+          visible
+      );
+    }
+
+public void updateAceBalance(
+    int mentalBalance,
+    double exactBalance)
+{
+  aceMentalBalanceLabel.setText(
+      String.format(
+          "ACE BALANCE  %+d",
+          mentalBalance
+      )
+  );
+
+  aceExactBalanceLabel.setText(
+      String.format(
+          "exact  %+.1f",
+          exactBalance
+      )
+  );
+}
+
+    public void updateAceCountHand(
+        int mentalBalance)
+    {
+      aceCountHandView.setBalance(
+          mentalBalance
+      );
+    }
+
+
+    public void updateAceAwarenessVisibility()
+    {
+      boolean aceCountOn =
+          settings.aceCountVisible();
+
+      boolean handSignalsOn =
+          settings.handSignalsEnabled();
+
+      boolean discardTrayOn =
+          settings.isDiscardTrayVisible();
+
+      boolean showAceHand =
+          aceCountOn
+          && handSignalsOn
+          && discardTrayOn;
+
+      boolean showBadge =
+          aceCountOn
+          && !showAceHand;
+
+      aceCountHandView.setVisible(
+          showAceHand
+      );
+
+      aceBalanceBadge.setVisible(
+          showBadge
+      );
+    }
+    
+    public double getDiscardedDecksSeen()
+    {
+      return discardTrayView.getDecksSeen();
+    }
+    
+    public void changeToDifferentFelt()
+    {
+      GameSettings.FeltColor current =
+          settings.getFeltColor();
+
+      GameSettings.FeltColor next;
+
+      do
+      {
+        GameSettings.FeltColor[] colors =
+            GameSettings.FeltColor.values();
+
+        next =
+            colors[
+                new Random().nextInt(
+                    colors.length
+                )
+            ];
+      }
+      while (next == current);
+
+      settings.setFeltColor(
+          next
+      );
+
+      setFeltColor(
+          next
+      );
+    }
 }

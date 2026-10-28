@@ -3,6 +3,7 @@ import javafx.stage.Stage;
 import java.util.EnumSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class Round
 {
@@ -19,9 +20,10 @@ public class Round
   private Map<Hand, HandView> handViews = new IdentityHashMap<>();
   private DealerPlayEngine dealerPlayEngine;
   private PlayerRoundEngine playerRoundEngine;
+  private AceOnlyCount aceCount;
+  private Consumer<AceOnlyCount> aceCountUpdated;
   
-  
-  public Round(Stage stage, BlackjackSceneCreator sceneCreator, IOutputter outputter, Shoe shoe, HandStrategy playerHandStrategy, int betAmount, Bankroll bankroll, GameSettings settings)
+  public Round(Stage stage, BlackjackSceneCreator sceneCreator, IOutputter outputter, Shoe shoe, HandStrategy playerHandStrategy, int betAmount, Bankroll bankroll, GameSettings settings, AceOnlyCount aceCount, Consumer<AceOnlyCount> aceCountUpdated)
   {
     this.stage = stage;
     this.sceneCreator = sceneCreator;
@@ -35,6 +37,8 @@ public class Round
     this.settings = settings;
     this.dealerPlayEngine = new DealerPlayEngine(settings);
     this.playerRoundEngine = new PlayerRoundEngine(settings);
+    this.aceCount = aceCount;
+    this.aceCountUpdated = aceCountUpdated;
   }
   
   public void play()
@@ -67,13 +71,15 @@ public class Round
     firstPlayerHand.addCard(playerCard1);
     CardView playerCardView1 = firstPlayerHandView.cardAdded(firstPlayerHand, playerCard1);
     tableAnimator.dealCard(playerCard1, playerCardView1, false);
-
+    observeVisibleCard(playerCard1);
+    
     // Dealer first card
     Card dealerCard1 = shoe.drawCard();
     dealerHand.addCard(dealerCard1);
     CardView dealerCardView1 = dealerHandView.cardAdded(dealerHand, dealerCard1);
     tableAnimator.dealCard(dealerCard1, dealerCardView1, false);
-
+    observeVisibleCard(dealerCard1);
+    
     // Player second card
     Card playerCard2 = shoe.drawCard();
     
@@ -83,7 +89,8 @@ public class Round
     firstPlayerHand.addCard(playerCard2);
     CardView playerCardView2 = firstPlayerHandView.cardAdded(firstPlayerHand, playerCard2);
     tableAnimator.dealCard(playerCard2, playerCardView2, false);
-
+    observeVisibleCard(playerCard2);
+    
     // Dealer hole card
     Card dealerCard2 = shoe.drawCard();
     dealerHand.addCard(dealerCard2);
@@ -97,6 +104,7 @@ public class Round
       dealerView.showDealerHoleCard(dealerHand);
       tableAnimator.flipCard(dealerHand.getDealerHoleCard(),
                               dealerView.getDealerHoleCardView());
+      observeVisibleCard(dealerHand.getDealerHoleCard());
     }
     else
     {
@@ -165,6 +173,7 @@ public class Round
                       secondCardView,
                       false
                   );
+                  observeVisibleCard(hand.getCard(1));
                 }
               }
               else
@@ -209,6 +218,7 @@ public class Round
                       );
 
               tableAnimator.dealCard(card, cardView, false);
+              observeVisibleCard(card);
             }
 
             @Override
@@ -336,6 +346,7 @@ public class Round
                 replacementView,
                 false
               );
+              observeVisibleCard(replacementCard);
             }
           }
       );
@@ -391,6 +402,21 @@ public class Round
     }
     
     tableAnimator.clearTable();
+
+    int mentalBalance =
+      aceCount.getMentalBalance(
+          sceneCreator.getDiscardedDecksSeen()
+      );
+
+    sceneCreator.updateAceBalance(
+      mentalBalance,
+      aceCount.getAceBalance()
+    );
+
+    sceneCreator.updateAceCountHand(
+      mentalBalance
+    );
+    
     sceneCreator.getSubroundBadge().reset();
   }
     
@@ -402,12 +428,14 @@ public class Round
     HandView dealerView = getHandView(dealerHand);
     dealerView.showDealerHoleCard(dealerHand);
     tableAnimator.flipCard(dealerHand.getDealerHoleCard(), dealerView.getDealerHoleCardView());
+    observeVisibleCard(dealerHand.getDealerHoleCard());
 
     dealerPlayEngine.play(dealerHand, shoe,
       card ->
       {
         CardView cardView = getHandView(dealerHand).cardAdded(dealerHand, card);
         tableAnimator.dealCard(card, cardView, false);
+        observeVisibleCard(card);
       }
     );
     
@@ -562,10 +590,8 @@ public class Round
     {
       message =
           "YOU WON "
-          + bankroll.getFormattedCurrency(payout)
-          + "! (+"
           + bankroll.getFormattedCurrency(net)
-          + ")";
+          + "!";
 
       tone = MessageTone.POSITIVE;
     }
@@ -628,5 +654,25 @@ public class Round
   }
 
   return handView;
+  }
+  
+  private void observeVisibleCard(Card card)
+  {
+    aceCount.observe(card);
+    int mentalBalance =
+      aceCount.getMentalBalance(
+          sceneCreator.getDiscardedDecksSeen()
+      );
+
+    sceneCreator.updateAceBalance(
+      mentalBalance,
+      aceCount.getAceBalance()
+    );
+
+    sceneCreator.updateAceCountHand(
+      mentalBalance
+    );
+    
+    aceCountUpdated.accept(aceCount);
   }
 }

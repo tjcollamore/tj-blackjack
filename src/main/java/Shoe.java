@@ -3,15 +3,40 @@ import java.util.*;
 public class Shoe
 {
   private List<Deck> decks = new ArrayList<Deck>();
-  private Random random = new Random();
+  private Random random;
   private final int deckCount;
   
   public Shoe(int deckCount)
   {
-    this.deckCount = deckCount;
-    buildNewShoe();
+    this(
+        deckCount,
+        new Random()
+    );
   }
 
+  public Shoe(
+      int deckCount,
+      long seed)
+  {
+    this(
+        deckCount,
+        new Random(seed)
+    );
+  }
+
+  private Shoe(
+      int deckCount,
+      Random random)
+  {
+    this.deckCount =
+        deckCount;
+
+    this.random =
+        random;
+
+    buildNewShoe();
+  }
+  
   private void buildNewShoe()
   {
     decks.clear();

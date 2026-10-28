@@ -50,9 +50,41 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
-                <configuration>
-                    <mainClass>Main</mainClass>
-                </configuration>
+
+            <executions>
+                <execution>
+                    <id>research</id>
+                    <goals>
+                        <goal>java</goal>
+                    </goals>
+
+                    <configuration>
+                        <mainClass>StrategyResearchRunner</mainClass>
+                    </configuration>
+                </execution>
+
+                <execution>
+                    <id>frequency</id>
+                    <goals>
+                        <goal>java</goal>
+                    </goals>
+
+                    <configuration>
+                        <mainClass>StrategyFrequencyRunner</mainClass>
+                    </configuration>
+                </execution>
+                <execution>
+                    <id>social-analysis</id>
+
+                    <goals>
+                        <goal>java</goal>
+                    </goals>
+
+                    <configuration>
+                        <mainClass>SocialStrategyAnalysisRunner</mainClass>
+                    </configuration>
+                </execution>
+            </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

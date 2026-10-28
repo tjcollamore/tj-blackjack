@@ -27,7 +27,7 @@ public class RoundResultAnalyzer
 
         message =
             "BLACKJACK!\nYOU WON "
-            + wager.getFormattedPayout()
+            + wager.getFormattedProfit()
             + "!";
 
         tone =
@@ -44,14 +44,14 @@ public class RoundResultAnalyzer
         {
           message =
               "DEALER BUSTED!\nYOU WON "
-              + wager.getFormattedPayout()
+              + wager.getFormattedProfit()
               + "!";
         }
         else
         {
           message =
               "YOU WON "
-              + wager.getFormattedPayout()
+              + wager.getFormattedProfit()
               + "!";
         }
 
@@ -86,14 +86,14 @@ public class RoundResultAnalyzer
             && dealerHand.isBlackjack())
         {
           message =
-              "PUSH!\nRecouped "
-              + wager.getFormattedPayout();
+              "PUSH!\n"
+              + wager.getFormattedPayout() + " BET RETURNED";
         }
         else
         {
           message =
-              "Push\nRecouped "
-              + wager.getFormattedPayout();
+              "Push\n"
+              + wager.getFormattedPayout() + " BET RETURNED";
         }
 
         tone =
@@ -105,8 +105,8 @@ public class RoundResultAnalyzer
       case SURRENDER:
       {
         message =
-            "SURRENDERED!\nRecouped "
-            + wager.getFormattedPayout();
+            "SURRENDERED!\n"
+            + wager.getFormattedPayout() + " RETURNED";
 
         tone =
             MessageTone.NEGATIVE;

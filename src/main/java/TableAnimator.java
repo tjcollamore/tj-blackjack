@@ -31,7 +31,7 @@ public class TableAnimator
 
   public void dealCard(Card card, CardView cardView, boolean leaveFaceDown)
   {
-    Node shoeAnchor = sceneCreator.getShoeAnchor();
+    Node shoeAnchor = sceneCreator.getDealerArea();
 
     // The CardView must already be in the scene graph so that
     // JavaFX knows its final position.
@@ -243,6 +243,30 @@ public class TableAnimator
         );
 
         sweep.getChildren().add(move);
+          if (sceneCreator.isDiscardTrayVisible())
+          {
+            ScaleTransition shrink =
+                new ScaleTransition(
+                    Duration.millis(320),
+                    cardView
+                );
+
+            shrink.setToX(
+                0.35
+            );
+
+            shrink.setToY(
+                0.35
+            );
+
+            shrink.setInterpolator(
+                Interpolator.EASE_IN
+            );
+
+            sweep.getChildren().add(
+                shrink
+            );
+          }
       }
 
       wholeSequence.getChildren().add(sweep);
@@ -252,7 +276,9 @@ public class TableAnimator
 
     public void clearTable()
     {
-      List<Node> allCards = new ArrayList<>();
+      List<Node> allCards =
+          new ArrayList<>();
+
 
       allCards.addAll(
           sceneCreator.getDealerCards()
@@ -261,35 +287,76 @@ public class TableAnimator
       allCards.addAll(
           sceneCreator.getPlayerCards()
       );
-        
-      discardCards(allCards);
-
-      sceneCreator.getDealerScoreBadge().setVisible(false);          sceneCreator.getPlayerScoreBadge().setVisible(false);
-
-      sceneCreator.getDealerCards().clear();
-      sceneCreator.getPlayerCards().clear();
 
 
-        sceneCreator
-            .getSplitWagerChipView()
-            .setAmount(
-                0,
-                ChipDisplayMode.WAGER
-            );
+      int discardedCards =
+          0;
 
-        sceneCreator
-            .getSplitWagerChipView()
-            .setTranslateX(
-                0
-            );
 
-        sceneCreator
-            .getWagerChipView()
-            .setTranslateX(
-                0
-            );
+      for (Node node :
+           allCards)
+      {
+        if (node instanceof CardView)
+        {
+          discardedCards++;
+        }
+      }
+
+
+      discardCards(
+          allCards
+      );
+
+
+      sceneCreator.addDiscardedCards(
+          discardedCards
+      );
+
+
+      sceneCreator
+          .getDealerScoreBadge()
+          .setVisible(
+              false
+          );
+
+      sceneCreator
+          .getPlayerScoreBadge()
+          .setVisible(
+              false
+          );
+
+
+      sceneCreator
+          .getDealerCards()
+          .clear();
+
+      sceneCreator
+          .getPlayerCards()
+          .clear();
+
+
+      sceneCreator
+          .getSplitWagerChipView()
+          .setAmount(
+              0,
+              ChipDisplayMode.WAGER
+          );
+
+
+      sceneCreator
+          .getSplitWagerChipView()
+          .setTranslateX(
+              0
+          );
+
+
+      sceneCreator
+          .getWagerChipView()
+          .setTranslateX(
+              0
+          );
     }
-
+    
     public void pause(Duration duration)
     {
       PauseTransition pause =

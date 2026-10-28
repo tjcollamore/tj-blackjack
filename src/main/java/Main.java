@@ -5,6 +5,7 @@ import javafx.scene.control.Label;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 public class Main extends Application 
 {  
@@ -32,8 +33,11 @@ public class Main extends Application
   {
     IOutputter outputter = new ConsoleOutputter();
     Shoe shoe = null;
+    AceOnlyCount aceCount = new AceOnlyCount();
+    AceAwarenessState aceAwareness = new AceAwarenessState();
+    
     int lastDeckSetting = settings.getDecksInShoe();
-    HandStrategy playerHandStrategy = new PlayerInteractiveHandStrategy(stage);
+    HandStrategy playerHandStrategy = new PlayerInteractiveHandStrategy(stage, sceneCreator);
 
     Bankroll bankroll = new Bankroll(GameOptions.STARTING_BANKROLL, sceneCreator.getBankrollLabel(), sceneCreator.getBankrollChipView(), outputter);
 
@@ -61,7 +65,6 @@ public class Main extends Application
         }
     );
 
-    
     while(true)
     {      
       bankroll.addFundsIfBroke(stage, GameOptions.STARTING_BANKROLL, GameOptions.ATM_BANK_FEE, GameOptions.TABLE_MIN_BET);
@@ -96,20 +99,87 @@ public class Main extends Application
       {
         bankroll.showActualBankroll();
 
-        boolean confirmed =
-            ColorUpDialog.show(
-                stage,
-                bankroll.get()
-            );
+        ColorUpDialog.Choice colorUpChoice =
+          ColorUpDialog.show(stage, bankroll.get());
 
-        if (confirmed)
+        if (colorUpChoice == ColorUpDialog.Choice.EXIT)
+        {
           break;
+        }
 
-        bankroll.showWagerPreview(
-            wagerSelector.getWager()
-        );
-
+        if (colorUpChoice == ColorUpDialog.Choice.CHANGE_TABLE)
+        {
+          if (aceAwareness.isDecisionWindowReached())
+          {
+            if (aceAwareness.isTableChangeRecommended()
+              && !aceAwareness.isLateWarningShown())
+            {
+            ChoiceDialog.showGameMessage(
+                stage,
+                "GOOD TABLE CHANGE\n"
+                + "The shoe was Ace-poor "
+                + "within the decision window.",
+                MessageTone.POSITIVE,
+              Duration.seconds(3.0)
+            );
+            }
+            else if (aceAwareness.isTableChangeRecommended())
+            {
+            ChoiceDialog.showGameMessage(
+                stage,
+                "LATE TABLE CHANGE\n"
+                + "The shoe was already past "
+                + "the decision window.",
+                MessageTone.NEUTRAL,
+              Duration.seconds(3.0)
+            );
+            }
+            else
+            {
+              ChoiceDialog.showGameMessage(
+                  stage,
+                  "TABLE CHANGE NOT NEEDED\n"
+                  + "The shoe is not Ace-poor.",
+                  MessageTone.NEUTRAL,
+                Duration.seconds(3.0)
+              );
+            }
+          }
+          
+          shoe = new Shoe(settings.getDecksInShoe());
+          sceneCreator.resetDiscardTray();
+          aceCount.reset();
+          aceAwareness.reset();
+          int mentalBalance =
+            aceCount.getMentalBalance(
+                sceneCreator.getDiscardedDecksSeen()
+            );
+          
+          sceneCreator.updateAceCountHand(mentalBalance);
+          sceneCreator.updateAceBalance(mentalBalance, aceCount.getAceBalance());
+          sceneCreator.changeToDifferentFelt();
+          continue;
+        }
+        
+        bankroll.showWagerPreview(wagerSelector.getWager());
         continue;
+      }
+
+      if (aceAwareness.isLateWarningShown()
+        && aceAwareness.isTableChangeRecommended()
+        && !aceAwareness.isTableChangeMissed())
+      {
+        aceAwareness.setTableChangeMissed(
+            true
+        );
+  
+        ChoiceDialog.showGameMessage(
+            stage,
+            "MISSED TABLE CHANGE\n"
+            + "The shoe stayed Ace-poor "
+            + "past the decision window.",
+            MessageTone.NEGATIVE
+        );
       }
       
       int betAmount = wagerSelector.getWager();
@@ -123,7 +193,20 @@ public class Main extends Application
       if (shoe == null || shoe.getDeckCount() != currentDeckSetting)
       {
         shoe = new Shoe(currentDeckSetting);
+        sceneCreator.resetDiscardTray();
+        aceCount.reset();
+        aceAwareness.reset();
+        int mentalBalance =
+          aceCount.getMentalBalance(
+              sceneCreator.getDiscardedDecksSeen()
+          );
+        sceneCreator.updateAceCountHand(mentalBalance);
 
+        sceneCreator.updateAceBalance(
+          mentalBalance,
+          aceCount.getAceBalance()
+        );
+        
         if (deckSettingChanged)
         {
           outputter.output("Deck count changed. Starting new shoe...");
@@ -140,18 +223,42 @@ public class Main extends Application
         lastDeckSetting = currentDeckSetting;
       }
       
-      Round round = new Round(stage, sceneCreator, outputter, shoe, playerHandStrategy, betAmount, bankroll, settings);
+      Round round = new Round(stage, sceneCreator, outputter, shoe, playerHandStrategy, betAmount, bankroll, settings, aceCount,
+      updatedCount ->
+      {
+        aceAwareness.update(
+            updatedCount,
+            settings.getDecksInShoe(),
+            sceneCreator.getDiscardedDecksSeen()
+        );
+      });
       round.play();
+      aceAwareness.update(
+          aceCount,
+          settings.getDecksInShoe(),
+          sceneCreator.getDiscardedDecksSeen()
+      );
      
       outputter.output("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
       if (shoe.needsShuffle())
       {
         outputter.output("Cut card reached. Shuffling new shoe...");
         shoe.shuffle();
+        sceneCreator.resetDiscardTray();
+        aceCount.reset();
+        sceneCreator.updateAceCountHand(
+          aceCount.getMentalBalance(sceneCreator.getDiscardedDecksSeen()));
+        aceAwareness.reset();
+
+        sceneCreator.updateAceBalance(
+          aceCount.getMentalBalance(sceneCreator.getDiscardedDecksSeen()), 
+          aceCount.getAceBalance()
+        );
         ChoiceDialog.showGameMessage(stage, "SHUFFLING NEW " + shoe.getDeckCount() + "-DECK SHOE", MessageTone.DEFAULT);
       }
     }
 
     Platform.exit();
-  }    
+  }
+  
 } 
