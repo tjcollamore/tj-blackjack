@@ -104,7 +104,7 @@ public class PracticeTestScorerTest
 
     assertEquals(
         50,
-        result.getSocialCompatibleCount()
+        result.getCasinoReadyCount()
     );
   }
 
@@ -149,7 +149,7 @@ public class PracticeTestScorerTest
 
     assertEquals(
         50,
-        result.getSocialCompatibleCount()
+        result.getCasinoReadyCount()
     );
   }
 
